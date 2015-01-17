@@ -1,0 +1,2574 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+<script src="http://code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+<!-- tablestyles -->
+<style>
+#attacktable,#skilltable
+{
+	color: white;
+	background-color: black;
+	width: 100%;	
+}
+#maintable
+{
+	margin-left: auto;
+	margin-right: auto;
+	width: 50%;
+	color: white;
+}
+#submittemplate{
+	background-color: #444444;
+	border: solid 1px #666666;
+	display: block;
+	border: 1px solid #1b1c2d;
+	padding: 5px;
+	margin-left: 16px;
+	margin-right: 16px;
+	color: #ffffff;
+	}
+.infoslider{
+	border:dotted #444444 1px;
+	border-radius:10px;
+	padding:0.5em;"
+}
+th
+{
+  padding: 10px;
+  text-align: center;
+  color: white;
+  background-color: black; 
+  border: 2px solid;
+  border-radius: 5px;
+  font-family:Arial,Helvetica,sans-serif;
+}
+td
+{
+  padding: 15px;
+  text-align: left;
+  color: white;
+  background-color: black; 
+  border: 2px solid;
+  border-radius: 10px;
+  font-family:Arial,Helvetica,sans-serif;
+}
+textarea
+{
+  resize:none;
+  width:100%;
+  vertical-align: top;
+}
+sub
+{
+	cursor: pointer;
+}
+body
+{
+	background-image: url("http://i.imgur.com/YqD4CCr.png");
+	background-attachment:fixed;
+	background-repeat: repeat-y;
+	background-size: 100% auto;
+
+}
+.greentext
+{
+	color: #19E66B;
+	font-size: 8pt;
+}
+.whitetext
+{
+	color: #FFFFFF;
+	font-size: 10pt;
+	text-decoration:underline;
+}
+.redtext
+{
+	color: #DC143C;
+	font-size: 10pt;
+	text-decoration:underline;
+}
+.spoiler,.graytext
+{
+	color: #999999;
+	font-size: 10pt;
+}
+.darkkamratext{
+	color: #B07EFF;
+}
+.neutralkamracolor{
+	color: lightgray;
+}
+.lightkarmatext{
+	color: #9999FF;
+}
+</style>
+<!--  spoilersliders  -->
+<script>
+$(document).ready(function() {
+  $(".info .spoiler").click(function() {
+    var id= $(this).data("info")
+      if ( $(id).is( ":hidden" ) ) {
+        $(id).slideDown();
+      } else {
+        $(id).slideUp();
+      }
+  });
+});
+
+</script>
+
+<script>
+$(document).ready(function() {
+	function elementeffects (event){  
+    	var el= (event.target.value)
+   		var element= (event.target.dataset.element)
+		var tel=$(".levelselector")
+		var sum = 0;
+
+		for (i = 0; i < tel.length; i++) {
+		sum = sum + parseInt(tel[i].value);
+		}
+		console.log(sum);
+		if (sum > 4){
+			$("#alert-too-many").show();
+		} else {
+			$("#alert-too-many").hide();
+		}
+
+		for( i=0; i<=5; i++){
+			$("#"+element+"-"+i).hide()
+			$("#"+element+"-"+"specialproperty"+"-"+i).hide()
+		}
+    	$("#"+element+"-"+el).show()
+    	
+    	if (el===0) {
+    		$("#"+element+"-"+"specialproperty"+"-"+0).hide()
+    	};
+    	
+    	if (el>=1){
+    		$("#"+element+"-"+"specialproperty"+"-"+0).show()
+    	};
+    	
+    	if (el>=2) {
+    		$("#"+element+"-"+"specialproperty"+"-"+1).show()
+    	};
+    	
+    	if (el>=5) {
+    		$("#"+element+"-"+"specialproperty"+"-"+2).show()
+    	};
+
+	};
+	$(".levelselector").change(elementeffects);
+});
+</script>
+
+<script>
+$(document).ready(function() {
+	function typeeffects (event){  
+    	var type= (event.target.value)
+		
+		for( i=0; i<=7; i++){
+			$("#"+"type"+"-"+i).hide()
+		}
+    	$("#"+"type"+"-"+type).show()
+
+	};
+	$(".typeselector").change(typeeffects);
+});
+</script>
+<script>
+function karmacheck (){
+	var karmascore = $("#karmascoreinput").val();
+
+	switch (karmascore){
+		case "0":
+			$("#karmastate").text("Neutral").removeClass().addClass("neutralkamracolor");
+			$("#neutralalignment").show()
+			$("#darksoul").hide()
+			$("#hypermode").hide()
+			break;
+		case "-50":
+			$("#karmastate").text("Dark").removeClass().addClass("darkkamratext");
+			$("#neutralalignment").hide()
+			$("#darksoul").show()
+			$("#hypermode").hide()
+			break;
+		case "50":
+			$("#karmastate").text("Light").removeClass().addClass("lightkarmatext");
+			$("#neutralalignment").hide()
+			$("#darksoul").hide()
+			$("#hypermode").show()
+			break;
+		default:
+			$("#karmastate").text("Not a valid number").removeClass().addClass("redtext");
+			$("#neutralalignment").hide()
+			$("#darksoul").hide()
+			$("#hypermode").hide()
+			break;
+	}
+};
+$(document).ready(function(){
+	karmacheck();
+	$("#karmascoreinput").change(karmacheck);
+});
+</script>
+
+<!-- Add/Remove skills and attack buttons -->
+<script>
+var nextId = 0;
+function findNextSkillSlot() {
+	var n;
+
+	for (n = 0; n <= 4; n++) {
+		var skillid = "skill-" + n;
+		if ($("#" +skillid).length == 0) {
+			return skillid;
+		}
+	}
+	alert("You have run out of Skill slots. Please edit an existing skill.")
+	throw "Error: No available skill slot";
+}
+function addskill()
+{ 
+	var skillid = findNextSkillSlot();
+	$("tr.skilladdremove").before($("tr.skillmasterrow").clone(true,true).removeClass("skillmasterrow").addClass("newskill").attr("id", skillid).show()  );
+}
+</script>
+
+<script>
+var nextId = 0;
+function findNextAttackSlot() {
+	var i;
+
+	for (i = 0; i <= 6; i++) {
+		var attackid = "attack-" + i;
+		if ($("#" +attackid).length == 0) {
+			return attackid;
+		}
+	}
+	alert("You have run out of available attacks. Please edit an existing attack.")
+	throw "Error: No available attack alot";
+}
+function addattack()
+{ 
+	var attackid = findNextAttackSlot();
+	$("tr.attackaddremove").before($("tr.attackmasterrow").clone(true,true).removeClass("attackmasterrow").addClass("newattack").attr("id", attackid).show()  );
+}
+</script>
+</head>
+
+<body>
+<!-- variable sets -->
+<form oninput="hp.value=parseInt(basehp.value)-parseInt(hpsacrafice.value);
+					
+                 dmgbonus.value=parseInt(hpsacrafice.value)/parseInt(bonus.value);
+
+                 damage.value=parseInt(basedamage.value)+parseInt(dmgbonus.value);"
+                >
+<!-- Navi RP Info -->
+<table id="maintable" width="100%">
+	<tr>
+		<th>Make your own NAVI!</th>
+	</tr>
+		<th>Navi RP Information</th>
+	<tr>
+		<td>
+			Navi Name:
+			&nbsp;&nbsp;
+			<input type="text" name="naviname" maxlength="20" placeholder="Name.EXE">
+			<br>
+			Appearance: <span class="greentext">What your Navi looks like. </span>
+				<textarea rows="5" cols="40" input type="text" name="appearance" placeholder="You can provide an image instead, but we still prefer that you add a written description as well. You can be as thorough (or not) as you please. Refrain from using references to other characters (such as Protoman's body and Colonel's helmet)."></textarea>
+			<br>
+			Personality: <span class="greentext">Your Navi's personality. </span>
+				<textarea rows="5" cols="40" input type="text" name="appearance" placeholder="You don't need to go in depth if you don't want to. If you do, then by all means."></textarea>
+			<br>
+			Background: <span class="greentext">Your Navi's history.</span> 
+				<textarea rows="5" cols="40" input type="text" name="appearance" placeholder="How they came to be, who else they might know, what significant events they were a part of. Note that MMM's Timeline is 500 Years in the future of the Battle Network series (and assumes Star Force to have never happened), so refrain from having any relation to canon characters in your Navi's Background"></textarea>
+		</td>
+	</tr>
+	<th>
+		Statistical Information
+	</th>
+<!-- Version/Exp/Funds -->
+	<tr>
+		<td>
+			<h6 align="center">(click the + to expand info on specific topics)</h6>
+			Version/Experience:
+			<br>
+			<br>
+		<div class="info">
+				Version:
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1
+				<sub class="spoiler" data-info="#versioninfo">
+					(+)
+				</sub>
+				<div id="versioninfo" hidden class="infoslider">
+					<span class="greentext">Your first Navi begins at Version 1.</span>
+					<br>
+					<span class="graytext">In the MMM, a navi's version often describes their power. It's a notation of progress, and a badge of honor. In many other places, this would be your equivalent level, but this is not other places... the Version represents a little more than statistical progress, such as your measured power in Roleplay and, sometimes, the number of iterations your navi has gone through to reach the point they're at today.</span>
+				</div>
+		</div>
+	<br>
+		<div class="info">
+			Experience:
+			&nbsp;500 Exp
+			<sub class="spoiler" data-info="#expinfo">
+				(+)
+			</sub>
+			<div id="expinfo" hidden class="infoslider">
+				<span class="greentext">You begin with 500 Exp.</span>
+				<br>
+				<span class="graytext">The amount of Experience you obtain determines your Version. To obtain EXP, participate with an approved navi in roleplay, battles, events, and parties.</span>
+			</div>
+		</div>
+	<br>
+		Funds:
+		<br>
+		<div class="info">
+			Zenny:
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			<input type="number" id="zenny"  min="0" max="1000" step="1000"value="1000">z
+			<sub class="spoiler" data-info="#zennyinfo">
+				(+)
+			</sub>
+			<div id="zennyinfo" hidden class="infoslider">
+				<span class="greentext">Your first Navi begins with 1000 Zenny.</span>
+				<br>
+				<span class="graytext">Zenny is the primary coin that purchases most programs you will ever use. Additional Navis do not begin with any Zenny. Zenny cannot be shared between Navis except through savings accounts in the Electopian First International Bank.</span>
+			</div>
+		</div>	
+		<div class="info">
+			Bugfrags:
+			&nbsp;&nbsp;&nbsp;&nbsp;0
+			<sub class="spoiler" data-info="#bugfraginfo">
+				(+)
+			</sub>
+			<div id="bugfraginfo" hidden class="infoslider">
+				<span class="greentext">You start off with 0 BugFrags.</span>
+				<br>
+				<span class="graytext">BugFrags are non-tradable fragments of Bug Data that can be turned in for powerful items and tokens which can increase your other earnings. They are most commonly earned by accomplishing Achievements.</span>
+			</div>
+		</div>
+<!-- Type -->
+		<div class="info">
+			<br>
+			Type:
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+				<select class="typeselector">
+					<option value="0">--</option>
+					<option value="1">Normal</option>
+					<option value="2">Attack</option>
+					<option value="3">Defense</option>
+					<option value="4">Recon</option>
+					<option value="5">Support</option>
+					<option value="6">Intel</option>
+					<option value="7">Resource</option>
+				</select>
+				<sub class="spoiler" data-info="#typeinfo">
+					(+)
+				</sub>
+			<div id="typeinfo" hidden class="infoslider">
+				<span class="greentext">Choose 1 Type.</span>
+				<br>
+				<span class="graytext">Your navi's Type is a representation of their combat philosophy and determines how they grow with every Version-up. Ofttimes they impart some unique attribute unavailable to any other Navi type. Some may modify your starting stats. At Version 1, you must select a single Type from the list in the link above and gain all bonuses not limited to Version. Note that you may never naturally obtain a second Type.</span>
+				<br>
+				<span class="graytext">
+				<span class="whitetext">Type Effects</span>
+				<br>
+				<br><span class="whitetext">Normal Type</span>
+				<br>+10% Exp and Zenny Gain from Normal Battles
+				<br>+25 HP Max HP at every Version-up
+				<br>+5 Base Damage every even Version (2, 4, 6, etc.)
+				<br>+1 Attack Slot every even turn at Version 8
+				<br>+1 Program Slot
+				<br>+1 Use to All Skills at Version 15
+				<br>
+				<br><span class="whitetext">Attack Type</span>
+				<br>+10 Base Damage
+				<br>+5 Damage at every Version-up
+				<br>+10 Damage per Version to Damage+ Skills (+5 to Passive Damage+ Skills)
+				<br>+1 Use to Attack Slot Skills
+				<br>An Unavoidable Attack
+					<sub class="spoiler" data-info="#unavoidableinfo">
+						(+)
+					</sub>
+					<div id="unavoidableinfo" hidden class="infoslider">
+						<span class="greentext">Special Property</span>: User may create an Unavoidable attack
+						<br>-Attack deals 100 Flat Damage
+						<br>-Attack deals +10 Damage per Version Up
+						<br>-Attack cannot have any effects added to it, except 'Hits All' or 'Cannot Be Countered' (Each costs 20 Damage to Add)
+						<br>-Attack has a 1 Turn Unadjustable Cooldown
+					</div>
+				<br>Aiming Enhancement 
+					<sub class="spoiler" data-info="#aimingenhanceinfo">
+						(+)
+					</sub>
+					<div id="aimingenhanceinfo" hidden class="infoslider">
+						<span class="greentext">Passive Effect</span>: Aiming Skills add an additional omni-aimer to the affected attack
+					</div>
+				<br>
+				<br><span class="whitetext">Defense Type</span>
+				<br>+100 Max HP
+				<br>+50 HP at every Version-up
+				<br>+5 Armor per Version
+				<br>+1 Use to Shield Skills
+				<br>Natural Avoid Enhancement
+					<sub class="spoiler" data-info="#defavoidenhanceinfo">
+						(+)
+					</sub>
+					<div id="defavoidenhanceinfo" hidden class="infoslider">
+						<span class="greentext">Special Property</span>: Special Property: You may use your Natural Avoid as a Shield instead, at will
+					</div>
+				<br>Shield Enhancement
+				<sub class="spoiler" data-info="#sheildenhanceinfo">
+						(+)
+					</sub>
+					<div id="sheildenhanceinfo" hidden class="infoslider">
+						<span class="greentext">Passive Effect</span>: You may expend 2 Shield Skill Uses instead of one to make that use Unbreakable
+					</div>
+				<br>
+				<br><span class="whitetext">Recon Type</span>
+				<br>-1 CD to all Natural Avoids and Activated Elemental Special Properties
+				<br>+1 Attack Slot at Version 8
+				<br>+1 Use to Dodge Skills
+				<br>Natural Avoid Enhancement
+					<sub class="spoiler" data-info="#natavoidenhanceinfo">
+						(+)
+					</sub>
+					<div id="natavoidenhanceinfo" hidden class="infoslider">
+						<span class="greentext">Special Property</span>: You may make a single Natural Avoid apply to all attacks aimed at you that turn
+						<br><span class="greentext">Restriction</span>: Once per Battle
+					</div>
+				<br>Dodge Enhancement
+					<sub class="spoiler" data-info="#dodgeenhanceinfo" class="infoslider">
+						(+)
+					</sub>
+					<div id="dodgeenhanceinfo" hidden class="infoslider">
+						<span class="greentext">Passive Effect</span>: You may expend 2 Dodge Skill Uses instead of one to make that use an Omni-Dodge
+					</div>
+				<br>
+				<br><span class="whitetext">Support Type</span>
+				<br>You regenerate 5% of your Max HP each turn
+				<br>+2 Program Slots
+				<br>+1 Use to Healing Support Skills
+				<br>Healing Enhancement
+					<sub class="spoiler" data-info="#healingenhanceinfo">
+						(+)
+					</sub>
+					<div id="healingenhanceinfo" hidden class="infoslider">
+						<span class="greentext">Passive Effect</span>: You may expend two Healing Support Skill Uses instead of one to make that use heal all allies
+					</div>
+				<br>Barrier/Aura Enhancement
+					<sub class="spoiler" data-info="#barrierauraenhanceinfo">
+						(+)
+					</sub>
+					<div id="barrierauraenhanceinfo" hidden class="infoslider">
+						<span class="greentext">Barriers / Auras with Health</span> can be made Uncuttable upon formation, but will only last 2 Turns
+						<br><span class="greentext">Barriers / Auras without Health</span> can be made Uncuttable at the expense of 2 Uses instead of 1
+					</div>
+				<br>
+				<br><span class="whitetext">Intel Type</span>
+				<br>+25% Exp Gain from Normal Battles 
+				<br>+1 Total Attack
+				<br>+1 Max CD every even Version (2, 4, 6, etc.)
+				<br>+2 Program Slots
+				<br>+1 Use to a single Hyper Attack or Dark Chip
+				<br>Variable Enhancement
+					<sub class="spoiler" data-info="#variableenhanceinfo">
+						(+)
+					</sub>
+					<div id="variableenhanceinfo" hidden class="infoslider">
+						<span class="greentext">Passive Effect</span>: Upon entering a battle, gain one special property depending on your Opponent(s)
+						<br><span class="greentext">Vs Attack Types</span>: +5 Armor per Version
+						<br><span class="greentext">Vs Defense/Support Types</span>: +5 Damage per Version
+						<br><span class="greentext">Vs Recon Types</span>: One Attack becomes Fully Undodgeable (Once per Battle)
+						<br><span class="greentext">Vs Intel Types</span>: Negate one Hyper Attack or Dark Chip (Once per Battle)
+						<br><span class="greentext">Vs Normal Types</span>: EXP Gain increased to 150%
+						<br><span class="greentext">Vs Resource Types</span>: +1 Chip usable per battle
+					</div>
+				<br>
+				<br><span class="whitetext">Resource Type</span>
+				<br>25% Zenny Gain from Normal Battles 
+				<br>+2 Chips usable per battle
+				<br>+1 Program Slot
+				<br>+1 Accessory Slot
+				<br>+1 Element Level
+				<br>+1 More Element Level at Version 8
+				</span>
+			</div>
+			<div id="type-1"  class="graytext" hidden>
+				<span id="type-1">
+				<br><span class="whitetext">Normal Type</span>
+				<br>+10% Exp and Zenny Gain from Normal Battles
+				<br>+25 HP Max HP at every Version-up
+				<br>+5 Base Damage every even Version (2, 4, 6, etc.)
+				<br>+1 Attack Slot every even turn at Version 8
+				<br>+1 Program Slot
+				<br>+1 Use to All Skills at Version 15
+			</div>
+			<div id="type-2" class="graytext" hidden>
+				<br><span class="whitetext">Attack Type</span>
+				<br>+10 Base Damage
+				<br>+5 Damage at every Version-up
+				<br>+10 Damage per Version to Damage+ Skills (+5 to Passive Damage+ Skills)
+				<br>+1 Use to Attack Slot Skills
+				<br><span class="greentext">Special Property</span>: User may create an Unavoidable attack
+				<br>-Attack deals 100 Flat Damage
+				<br>-Attack deals +10 Damage per Version Up
+				<br>-Attack cannot have any effects added to it, except 'Hits All' or 'Cannot Be Countered' (Each costs 20 Damage to Add)
+				<br>-Attack has a 1 Turn Unadjustable Cooldown
+				<br>Aiming Enhancement <span class="greentext">Passive Effect</span>: Aiming Skills add an additional omni-aimer to the affected attack
+			</div>
+			<div id="type-3" class="graytext" hidden>
+				<br><span class="whitetext">Defense Type</span>
+				<br>+100 Max HP
+				<br>+50 HP at every Version-up
+				<br>+5 Armor per Version
+				<br>+1 Use to Shield Skills
+				<br>Natural Avoid Enhancement
+				<br><span class="greentext">Special Property</span>: Special Property: You may use your Natural Avoid as a Shield instead, at will
+				<br>Shield Enhancement <span class="greentext">Passive Effect</span>: You may expend 2 Shield Skill Uses instead of one to make that use Unbreakable
+			</div>
+			<div id="type-4" class="graytext" hidden>
+				<br><span class="whitetext">Recon Type</span>
+				<br>-1 CD to all Natural Avoids and Activated Elemental Special Properties
+				<br>+1 Attack Slot at Version 8
+				<br>+1 Use to Dodge Skills
+				<br>Natural Avoid Enhancement <span class="greentext">Special Property</span>: You may make a single Natural Avoid apply to all attacks aimed at you that turn
+				<br><span class="greentext">Restriction</span>: Once per Battle
+				<br>Dodge Enhancement <span class="greentext">Passive Effect</span>: You may expend 2 Dodge Skill Uses instead of one to make that use an Omni-Dodge
+			</div>
+			<div id="type-5" class="graytext" hidden>
+				<br><span class="whitetext">Support Type</span>
+				<br>You regenerate 5% of your Max HP each turn
+				<br>+2 Program Slots
+				<br>+1 Use to Healing Support Skills
+				<br>Healing Enhancement <span class="greentext">Passive Effect</span>: You may expend two Healing Support Skill Uses instead of one to make that use heal all allies
+				<br>Barrier/Aura Enhancement
+				<span class="greentext">Barriers / Auras with Health</span> can be made Uncuttable upon formation, but will only last 2 Turns
+				<br><span class="greentext">Barriers / Auras without Health</span> can be made Uncuttable at the expense of 2 Uses instead of 1
+			</div>
+			<div id="type-6" class="graytext" hidden>
+				<br><span class="whitetext">Intel Type</span>
+				<br>+25% Exp Gain from Normal Battles 
+				<br>+1 Total Attack
+				<br>+1 Max CD every even Version (2, 4, 6, etc.)
+				<br>+2 Program Slots
+				<br>+1 Use to a single Hyper Attack or Dark Chip
+				<br>Variable Enhancement<span class="greentext">Passive Effect</span>: Upon entering a battle, gain one special property depending on your Opponent(s)
+						<br><span class="greentext">Vs Attack Types</span>: +5 Armor per Version
+						<br><span class="greentext">Vs Defense/Support Types</span>: +5 Damage per Version
+						<br><span class="greentext">Vs Recon Types</span>: One Attack becomes Fully Undodgeable (Once per Battle)
+						<br><span class="greentext">Vs Intel Types</span>: Negate one Hyper Attack or Dark Chip (Once per Battle)
+						<br><span class="greentext">Vs Normal Types</span>: EXP Gain increased to 150%
+						<br><span class="greentext">Vs Resource Types</span>: +1 Chip usable per battle
+			</div>
+			<div id="type-7" class="graytext" hidden>
+				<br><span class="whitetext">Resource Type</span>
+				<br>25% Zenny Gain from Normal Battles 
+				<br>+2 Chips usable per battle
+				<br>+1 Program Slot
+				<br>+1 Accessory Slot
+				<br>+1 Element Level
+				<br>+1 More Element Level at Version 8
+			</div>
+<!-- Karma -->		
+	<br><br>
+	<div class="info">
+		Karma:
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		<span id="karmascore"><input type="number" id="karmascoreinput"  min="-50" max="50" step="50" value="0">,&nbsp;<span id="karmastate">place holder</span></span>
+		<sub class="spoiler" data-info="#karmainfo">
+			(+)
+		</sub>
+		<div id="karmainfo" hidden class="infoslider">
+			<span class="greentext">You begin with 0 Karma.</span>
+			<br>
+			<span class="graytext">Karma is an alignment system that separates the good from the bad from the neutral. What a navi chooses to do in regards to morality over the course of Roleplay and battle changes their capabilities and their access to powerful abilities.
+			<br>
+			Karma ranges on a scale from -100 to +100.
+			<br>
+			<br>Your Navi can gain +1 Karma at the end of battle per turn that the battle last.
+			<br>This is optional, and can result in a max of +5 Karma per battle.
+			<br>At +50 Karma, you are considered 'Light Karma'.
+			<br>Your Karma can only be raised higher through RP in Story Mode.
+					<font >Special Property</font>: Hyper Mode
+			<br><font class="lightkarmatext">Light Karma</font>
+				<sub class="spoiler" data-info="#lightkarmainfo">
+					(+)
+				</sub>
+				<div id="lightkarmainfo" hidden class="infoslider">
+					<i>A navi of Light Karma is the pinnacle of righteousness and good. Those with high karma are rewarded with advantages of greater versatility in the form of a significant number of Hyper Attacks and Hyper Modes which allow them to augment their fighting styles with potent finishers and impressive powers.</i>
+				</div>
+			<br>
+			<br>Your Navi will lose Karma every time they use a Dark Chip.
+			<br>At -50 Karma, you are considered 'Dark Karma'.
+			<br>Your Karma can only be dropped lower through RP in Story Mode.
+			<br><font class="darkkamratext">Dark Karma</font>
+				<sub class="spoiler" data-info="#darkkarmainfo">
+					(+)
+				</sub>
+				<div id="darkkarmainfo" hidden class="infoslider">
+					<i>A navi of Dark Karma is a force of evil and power. Dark Navis make use of Dark Chips, a set of very powerful single-use attacks, and they also gain the ability to use the Dark Soul: a pseudo-revival effect that provides temporary invulnerability to most forms of attack.</i>
+				</div>
+			<br>
+			<br>At Version 1, your Karma begins at 0 unless you have the Light or Dark Elements.
+			<br>As long as your Karma remains between -49 and +49, you are considered 'Neutral Karma'.
+			<br><font class="neutralkamracolor">Neutral Karma</font>
+				<sub class="spoiler" data-info="#neutralinfo">
+					(+)
+				</sub>
+				<div id="neutralinfo" hidden class="infoslider">
+					<i>A navi of Neutral Karma is a source of balance and impartiality. Those of neutral karma have greater innate capabilities and higher general powers than those of extreme alignments. That is, they tend to have enhanced capabilities without drawing from many outside forces.</i>
+				</div>
+		</span>
+		</div>
+	</div>
+	<br>
+	<div id="karmicefects">
+		<span id="neutralalignment" hidden> <font class="neutralkamracolor">Special Property</font>: Neutral Alignment
+			<sub class="spoiler" data-info="#neutralalignmentinfo">
+				(+)
+			</sub>
+			<div id="neutralalignmentinfo" hidden class="infoslider">
+				<span class="greentext">Passive Effect</span>: User has +1 Skill.
+			</div>
+		</span>
+		<span id="darksoul" hidden><font class="darkkamratext">Special Property</font>: Dark Soul
+			<sub class="spoiler" data-info="#darksoulinfo">
+				(+)
+			</sub>
+			<div id="darksoulinfo" hidden class="infoslider">
+				<span class="greentext">Advanced Form</span>
+					<br>-Automatically activates after reaching 0 HP. Revives Navi with 1 HP
+					<br>-Navi is invincible except against attacks modified by Aiming skills
+					<br>-Navi has +1 Attack Slot while in Dark Soul
+					<br>-Dark Soul lasts for 2 Turns
+			</div>
+		</span>
+		<span id="hypermode" hidden><font class="lightkarmatext">Special Property</font>: Hyper Mode
+			<sub class="spoiler" data-info="#hypermodeinfo">
+				(+)
+			</sub>
+			<div id="hypermodeinfo" hidden class="infoslider">
+				<span class="greentext">Advanced Form</span>
+				<br>-Hyper Mode lasts for 5 Turns
+				<br>-Adding Effects deducts turns from the Hyper Mode
+				<br>-Hyper Mode Effects become stronger as you Version Up
+				<br>-Usable Once per Battle
+			</div>
+		</span>
+	</div>
+	<br>
+<!-- Elements --> 
+	<div class="info">
+		Elements:
+		<div id="alert-too-many" class="redtext" hidden>You have run out of element levels! Please edit them to match you alotted amount.</div>
+		<sub class="spoiler" data-info="#elementinfo">
+			(+)
+		</sub>
+		<div id="elementinfo" class="infoslider" hidden text-align="left">
+			<span class="greentext">You begin with 3 Element Levels.</span>
+			<br>					
+			<span class="graytext">Elements are a core feature of almost every navi: They determine how people react to your attacks, how you deal with your opponent's attacks, and grant you various abilities related to them.
+			<br>
+			Each element has 5 levels of power. When you first obtain an element, whether through making your character or via an auxiliary system, that element begins at Level 1. When you gain additional element levels (or decide to designate more than one to an element upon navi creation), it graduates to the next subsequent level.
+		</span>
+<br><br>
+    <div class="info">
+    	<img src="http://imgur.com/EXFaudT.png" alt="Normal">
+        <font color=#808080>Normal</font>
+			&nbsp;&nbsp;&nbsp;
+			Lv.<select data-element="normal" class="levelselector">
+				<option value="0">--</option>
+				<option value="1">Lv.1</option>
+				<option value="2">Lv.2</option>
+				<option value="3">Lv.3</option>
+				<option value="4">Lv.4</option>
+				<option value="5">Lv.5</option>
+				</select>
+		<sub class="spoiler" data-info="#normalinfo">
+			(+)
+		</sub>
+			<div id="normalinfo" class="infoslider" hidden text-align="left">
+			<span class="elementdescription">
+				<i>Characters with no specialized field belong to this element, as do generic attacks. Proficiency in this element represents flexibility; a jack of all trades, but master of none.</i>
+				<br>
+				<br>
+				<font color=#808080>Special Property</font>: Neutrality
+				<sub class="spoiler" data-info="#neutralityinfo">
+					(+)
+				</sub>
+					<div id="neutralityinfo" class="infoslider" hidden>
+						<font color=#808080>Passive Effect</font>: Remove 1 Weakness from each element
+					</div>
+				<br>
+				<br>
+				<font color=#808080>Strengths</font>: -
+				<br>
+				<font color=#808080>Weaknesses</font>: -
+				<br>
+				<br>
+				<font color=#808080>Lv1</font>: +100 HP. +10 Damage.
+				<br>
+				<font color=#808080>Lv2</font>: +200 HP. +20 Damage.
+				<br>
+				<font color=#808080>Lv3</font>: +300 HP. +30 Damage. 
+				<br>
+				<font color=#808080>Lv4</font>: +400 HP. +40 Damage. 
+				<br>
+				<font color=#808080>Lv5</font>: +400 HP. +40 Damage. +1 Program Slot.
+				</span>
+			</div>
+	</div>
+	<br>
+    <div class="info">
+        <img src="http://imgur.com/o5GQfsn.png" alt="Fire">
+        <font color=#FF5555>Fire</font>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		Lv.<select data-element="fire" class="levelselector">
+			<option value="0">--</option>
+			<option value="1">Lv.1</option>
+			<option value="2">Lv.2</option>
+			<option value="3">Lv.3</option>
+			<option value="4">Lv.4</option>
+			<option value="5">Lv.5</option>
+			</select>
+		<sub class="spoiler" data-info="#fireinfo">
+			(+)
+		</sub>
+			<div id="fireinfo" class="infoslider" hidden text-align="left">
+				<span class="elementdescription">	
+					<i>An obsession with fire, an embodiment of fire, or even just a relation to fire would define any character prioritizing this element. Fire attacks can usually be defined similarly.</i>
+					<br>
+					<br>
+					<font color=#FF5555>Special Property</font>: Burn
+					<sub class="spoiler" data-info="#burninfo">
+						(+)
+					</sub>
+						<div id="burninfo" class="infoslider" hidden>
+							<font color=#FF5555>Status Effect</font>: Costs 20 Damage to add to a Fire Attack. <font color=#FF5555>Requires Fire Lv2 or Higher</font>.
+							<br><br>
+							Minimum Cooldown: Once per Turn (-1 Max CD)
+							<br><br>
+							<font color=#FF5555>Burn</font>: For 3 turns, afflicted Navi takes 50 Damage per turn and cannot use Undershirt effects. On the first turn, that Navi's attacks have -50 Damage. Once ended, a Navi cannot be Burned for 2 turns.
+							<br><br>
+							<font color=#FF5555>Strengths</font>: Wood, Dark, Toxic, Ice, Fire
+							<br>
+							<font color=#FF5555>Weaknesses</font>: Aqua, Wind, Stone, Sand, Bug
+							<br><br>
+						</div>
+					<br>
+					<br>
+					<font color=#FF5555>Lv1</font>: +20 Damage.
+					<br>
+					<font color=#FF5555>Lv2</font>: +40 Damage.
+					<br>
+					<font color=#FF5555>Lv3</font>: +60 Damage. 
+					<br>
+					<font color=#FF5555>Lv4</font>: +80 Damage. 
+					<br>
+					<font color=#FF5555>Lv5</font>: +80 Damage. Immune to Burn.
+				</span>
+			</div>
+	</div>
+	<br>
+     <div class="info">
+     	<img src="http://imgur.com/AesLAg5.png" alt="Aqua">
+        <font color=#BBBBFF>Aqua</font>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+				Lv.<select data-element="aqua" class="levelselector">
+				<option value="0">--</option>
+				<option value="1">Lv.1</option>
+				<option value="2">Lv.2</option>
+				<option value="3">Lv.3</option>
+				<option value="4">Lv.4</option>
+				<option value="5">Lv.5</option>
+				</select>
+		<sub class="spoiler" data-info="#aquainfo">
+			(+)
+		</sub>
+			<div id="aquainfo" class="infoslider" hidden text-align="left">
+				<span class="elementdescription">
+				<i>Water takes multiple forms when used as one's ally. Those composed of it, those that manipulate it, and those that have an acquaintance with water will often be those that represent aqua as their dominant element.</i>
+				<br>
+				<br>
+				<font color=#BBBBFF>Special Property</font>: Soak
+				<sub class="spoiler" data-info="#soakinfo">
+					(+)
+				</sub>
+					<div id="soakinfo" class="infoslider" hidden>
+						<font color=#BBBBFF>Status Effect</font>: Costs 20 Damage to add to an Aqua Attack. <font color=#BBBBFF>Requires Aqua Lv2 or Higher</font>.
+						<br><br>
+						<font color=#BBBBFF>Minimum Cooldown</font>: 1 Turn
+						<br><br>
+						<font color=#BBBBFF>Soak</font>: For 2 turns, the afflicted Navi's attacks deal 1/2 Damage (final total) and they gain a weakness to the Elec Element. Once ended, a Navi cannot be Soaked for 2 turns.
+					</div>
+					<br><br>
+					<font color=#BBBBFF>Special Property</font>: Bubble
+					<sub class="spoiler" data-info="#bubbleinfo">
+						(+)
+					</sub>
+						<div id="bubbleinfo" class="infoslider" hidden>
+							<font color=#BBBBFF>Status Effect</font>: Costs 20 Damage to add to an Aqua Attack. <font color=#BBBBFF>Requires Aqua Lv5</font>.
+							<br><br>
+							<font color=#BBBBFF>Minimum Cooldown</font>: 1 Turn
+							<br><br>
+							<font color=#BBBBFF>Bubble</font>: Next turn, the afflicted Navi cannot attack unless hit by another attack before then. Once ended, a Navi cannot be Bubbled for 2 turns.
+						</div>
+					<br><br>
+					Strengths: Fire, Stone, Metal, Sand, Aqua
+					<br>
+					Weaknesses: Elec, Plasma, Toxic, Ice, Bug
+					<br><br>
+					<font color=#BBBBFF>Lv1</font>: +1 Natural Dodge (5 Turn CD).
+					<br>
+					<font color=#BBBBFF>Lv2</font>: +1 Natural Dodge (4 Turn CD).
+					<br>
+					<font color=#BBBBFF>Lv3</font>: +1 Natural Dodge (3 Turn CD). 
+					<br>
+					<font color=#BBBBFF>Lv4</font>: +2 Natural Dodges (Separate 5 Turn CDs).<br>
+					Panels start as Ocean (Lasts 3 Turns). 
+					<br>
+					<font color=#BBBBFF>Lv5</font>: +2 Natural Dodges (Separate 5 Turn CDs).<br>
+					Panels start as Ocean (Locked. Lasts 3 Turns).<br>
+					Immune to Soak and Bubble.
+					</span>
+				</div>
+	</div>
+	<br>
+	<div class="info">
+    	<img src="http://imgur.com/Qzz5Gd9.png" alt="Electricity">
+        <font color=#FFFF00>Electricity</font>
+				Lv.<select data-element="elec" class="levelselector">
+				<option value="0">--</option>
+				<option value="1">Lv.1</option>
+				<option value="2">Lv.2</option>
+				<option value="3">Lv.3</option>
+				<option value="4">Lv.4</option>
+				<option value="5">Lv.5</option>
+				</select>
+		<sub class="spoiler" data-info="#electricityinfo">
+			(+)
+		</sub>
+			<div id="electricityinfo" class="infoslider" hidden text-align="left">
+				<span class="elementdescription">
+				<i>Electrical entities, ecstatic personalities, and even just lightning-fast characters fall under this category of element. Electric attacks are often quicker than others and capable of leaving an enemy vulnerable for follow-up attacks.</i>
+				<br>
+				<br>
+				<font color=#FFFF00>Special Property</font>: Shock
+				<sub class="spoiler" data-info="#shockinfo">
+					(+)
+				</sub>
+					<div id="shockinfo" class="infoslider" hidden>
+						<font color=#FFFF00>Status Effect</font>:Costs 20 Damage to add to an Elec Attack. <font color=#FFFF00>Requires Elec Lv2 or Higher</font>.
+						<br><br>
+						<font color=#FFFF00>Minimum Cooldown</font>: 1 Turn
+						<br><br>
+						<font color=#FFFF00>Shock</font>: For 3 turns, the afflicted Navi takes damage equal to 3% of their current HP each time they avoid an attack. Once ended, a Navi cannot be Shocked for 2 turns.
+					</div>
+					<br><br>
+					<font color=#FFFF00>Special Property</font>: Paralyze
+					<sub class="spoiler" data-info="#paralyzeinfo">
+							(+)
+					</sub>
+						<div id="paralyzeinfo" class="infoslider" hidden>
+							<font color=#FFFF00>Status Effect</font>: Costs 20 Damage to add to an Elec Attack. Requires Elec Lv5.
+							<br><br>
+							Minimum Cooldown: 1 Turn
+							<br><br>
+							<font color=#FFFF00>Paralyze</font>: Afflicted Navi cannot avoid the next attack aimed at them. If no further attacks hit them before their turn, they have -1 attack slot for that turn. Does not stack. Once ended, a Navi cannot be Paralyzed for 2 turns.
+						</div>
+					<br><br>
+					<font color=#FFFF00>Strengths</font>: Plasma, Aqua, Sand, Blade, Elec
+					<br>
+					<font color=#FFFF00>Weaknesses</font>: Wood, Dark, Stone, Sniper, Bug
+					<br><br>
+					<font color=#FFFF00>Lv1</font>: +1 Attack Slot (2 Turn CD).
+					<br>
+					<font color=#FFFF00>Lv2</font>: +1 Attack Slot on Even Turns.
+					<br>
+					<font color=#FFFF00>Lv3</font>: +1 Attack Slot. 
+					<br>
+					<font color=#FFFF00>Lv4</font>: +1 Attack Slot. +1 More on Even Turns.
+					<br>
+					<font color=#FFFF00>Lv5</font>: +1 Attack Slot. +1 More on Even Turns.<br>
+					Immune to Shock and Paralyze.
+					</span>
+				</div>
+	</div>
+	<br>
+    <div class="info">
+    	<img src="http://imgur.com/o3dw5rx.png" alt="Wood">
+        <font color=#66AA66>Wood</font>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			Lv.<select data-element="wood" class="levelselector">
+				<option value="0">--</option>
+				<option value="1">Lv.1</option>
+				<option value="2">Lv.2</option>
+				<option value="3">Lv.3</option>
+				<option value="4">Lv.4</option>
+				<option value="5">Lv.5</option>
+				</select>
+		<sub class="spoiler" data-info="#woodinfo">
+			(+)
+		</sub>
+			<div id="woodinfo" class="infoslider" hidden text-align="left">
+				<span class="elementdescription">
+				<i>The representation of any kind of growth. While nature-imbued properties also define this trait, any character or ability that starts weak, like a seed, but can eventually grow into something much more powerful belongs to this element.</i>
+				<br>
+				<br>
+				<font color=#66AA66>Strengths</font>: Elec, Aqua, Wind, Light, Wood
+				<br>
+				<font color=#66AA66>Weaknesses</font>: Fire, Break, Toxic, Blade, Bug
+				<br><br>
+				<font color=#66AA66>Lv1</font>: +40 Regen.
+				<br>
+				<font color=#66AA66>Lv2</font>: +80 Regen.
+				<br>
+				<font color=#66AA66>Lv3</font>: +120 Regen. 
+				<br>
+				<font color=#66AA66>Lv4</font>: +160 Regen.
+				<br>
+				<font color=#66AA66>Lv5</font>: +160 Regen. When you fall under 25% of your Max HP, you regain 20% of it (Once per Battle). 
+				</span>
+			</div>
+	</div>
+	<br>
+	<div class="info">
+		<img src="http://imgur.com/UeaWWzt.png" alt="Metal">
+        <font color=#AAAA88>Metal</font>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		Lv.<select data-element="metal" class="levelselector">
+		<option value="0">--</option>
+		<option value="1">Lv.1</option>
+		<option value="2">Lv.2</option>
+		<option value="3">Lv.3</option>
+		<option value="4">Lv.4</option>
+		<option value="5">Lv.5</option>
+		</select>   	
+		<sub class="spoiler" data-info="#metalinfo">
+			(+)
+		</sub>
+			<div id="metalinfo" class="infoslider" hidden text-align="left">
+				<span class="elementdescription">
+				<i>A representation of impeccable durability and raw might. Metal characters can take a hit and shrug it off easier than others, while metal attacks hit harder and are generally more difficult to shrug off than most other attacks.</i>
+				<br><br>
+				<font color=#AAAA88>Strengths</font>: Break, Aqua, Elec, Laser, Metal
+				<br>
+				<font color=#AAAA88>Weaknesses</font>: Stone, Wood, Wind, Sonic, Bug
+				<br><br>
+				<font color=#AAAA88>Lv1</font>: +10 Armor. 5% of your Base Damage is added as Bonus Armor.
+				<br>
+				<font color=#AAAA88>Lv2</font>: +20 Armor. 5% of your Base Damage is added as Bonus Armor.
+				<br>
+				<font color=#AAAA88>Lv3</font>: +30 Armor. 5% of your Base Damage is added as Bonus Armor. 
+				<br>
+				<font color=#AAAA88>Lv4</font>: +40 Armor. 5% of your Base Damage is added as Bonus Armor. 
+				<br>
+				<font color=#AAAA88>Lv5</font>: +50 Armor. 5% of your Base Damage is added as Bonus Armor.
+				</span>
+			</div>
+	</div>
+	<br>
+    <div class="info">
+		<img src="http://imgur.com/ay4Uilz.png" alt="Stone">
+        <font color=#999999>Stone</font>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		 Lv.<select data-element="stone" class="levelselector">
+		<option value="0">--</option>
+		<option value="1">Lv.1</option>
+		<option value="2">Lv.2</option>
+		<option value="3">Lv.3</option>
+		<option value="4">Lv.4</option>
+		<option value="5">Lv.5</option>
+		</select>
+		<sub class="spoiler" data-info="#stoneinfo">
+			(+)
+		</sub>
+			<div id="stoneinfo" class="infoslider" hidden text-align="left">
+				<span class="elementdescription">
+				<i>Infallible towers with unbending knees. Stone characters are the hardest to be felled by any assault. Stone attacks have a variety of applications, ranging from raw strength to summoning objects and entities for assistance.</i>
+				<br><br>
+				<font color=#999999>Strengths</font>: Elec, Wind, Blade, Toxic, Stone
+				<br>
+				<font color=#999999>Weaknesses</font>: Sand, Break, Wood, Sonic, Bug
+				<br><br>
+				<font color=#999999>Lv1</font>: +150 HP. User takes 2% less damage.
+				<br>
+				<font color=#999999>Lv2</font>: +300 HP. User takes 4% less damage.
+				<br>
+				<font color=#999999>Lv3</font>: +450 HP. User takes 6% less damage. 
+				<br>
+				<font color=#999999>Lv4</font>: +600 HP. User takes 8% less damage. 
+				<br>
+				<font color=#999999>Lv5</font>: +750 HP. User takes 10% less damage.
+				</span>
+			</div>
+	</div>
+	<br>
+    <div class="info">
+		<img src="http://imgur.com/I16VlzR.png" alt="Shadow">
+		<font color=#7F5DA9>Shadow</font>
+			&nbsp;
+		 Lv.<select data-element="shadow" class="levelselector">
+		<option value="0">--</option>
+		<option value="1">Lv.1</option>
+		<option value="2">Lv.2</option>
+		<option value="3">Lv.3</option>
+		<option value="4">Lv.4</option>
+		<option value="5">Lv.5</option>
+		</select>
+		<sub class="spoiler" data-info="#shadowinfo">
+			(+)
+		</sub>
+			<div id="shadowinfo" class="infoslider" hidden text-align="left">
+				<span class="elementdescription">
+				<i>An element for the cunning and deceptive. Masters of stealth can hide in plain sight and are able to exploit blind spots more effectively than others. Even when the going gets rough, they have plenty of tools at their disposal to escape a sticky situation unseen.</i>
+				<br><br>
+				<font color=#7F5DA9>Strengths</font>: Toxic, Light, Dark, Break, Shadow
+				<br>
+				<font color=#7F5DA9>Weaknesses</font>: Sonic, Blade, Laser, Aqua, Bug
+				<br><br>
+				<font color=#7F5DA9>Lv1</font>: Reduce the damage of an incoming attack by 20% (5 Turn CD).
+				<br>
+				<font color=#7F5DA9>Lv2</font>: Reduce the damage of an incoming attack by 20% (3 Turn CD).
+				<br>
+				<font color=#7F5DA9>Lv3</font>: Reduce the damage of an incoming attack by 20% (3 Turn CD).<br>
+				+1 Use to One Avoid Skill. 
+				<br>
+				<font color=#7F5DA9>Lv4</font>: Reduce the damage of an incoming attack by 20% (1 Turn CD).<br>
+				+1 Use to One Avoid Skill. 
+				<br>
+				<font color=#7F5DA9>Lv5</font>: Reduce the damage of an incoming attack by 20% (1 Turn CD).<br>
+				+2 Uses to One Avoid Skill.
+				</span>
+			</div>
+	</div>
+	<br>
+	<div class="info">
+		<img src="http://imgur.com/OuPyqhr.png" alt="Dark">
+        <font color=#AF5F8A>Dark</font>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		 Lv.<select data-element="dark" class="levelselector">
+		<option value="0">--</option>
+		<option value="1">Lv.1</option>
+		<option value="2">Lv.2</option>
+		<option value="3">Lv.3</option>
+		<option value="4">Lv.4</option>
+		<option value="5">Lv.5</option>
+		</select>   	
+		<sub class="spoiler" data-info="#darkinfo">
+			(+)
+		</sub>
+			<div id="darkinfo" class="infoslider" hidden text-align="left">
+				<span class="elementdescription">
+				<i>Not to be confused as a karma state or a type of affinity - dark characters can sometimes find themselves on the opposite side of the karmic spectrum. Those belong to this element represent those capable of harnessing its power without being consumed by it. The attacks belonging to this element are among the strongest, but also very costly.</i>
+				<br><br>
+				<font color=#AF5F8A>Special Property</font> : Dark Denizen
+				<sub class="spoiler" data-info="#darkdenizeninfo">
+					(+)
+				</sub>
+					<div id="darkdenizeninfo" class="infoslider" hidden text-align="left">
+						<font color=#AF5F8A>Passive Effect</font> : -50 Karma
+					</div>
+				<br><br>
+				<font color=#AF5F8A>Strengths</font> : Toxic, Shadow, Blade, Elec, Dark
+				<br>
+				<font color=#AF5F8A>Weaknesses</font> : Metal, Sonic, Laser, Sniper, Bug
+				<br><br>
+				<font color=#AF5F8A>Lv1</font> : +1 Dark Chip Use.
+				<br>
+				<font color=#AF5F8A>Lv2</font> : +1 Dark Chip Use. +10 Dark Damage.
+				<br>
+				<font color=#AF5F8A>Lv3</font> : +1 Dark Chip Use. +20 Dark Damage.<br>
+				+1 Turn to Darksoul. 
+				<br>
+				<font color=#AF5F8A>Lv4</font> : +1 Dark Chip Use. +30 Dark Damage.<br>
+				+1 Turn to Darksoul. 
+				<br>
+				<font color=#AF5F8A>Lv5</font> : +2 Dark Chip Use. +30 Dark Damage.<br>
+				+1 Turn to Darksoul.<br>
+				-1 CD to One Dark Attack.
+				</span>
+			</div>
+	</div>
+	<br>
+	<div class="info">
+		<img src="http://imgur.com/UY6Hv3W.png" alt="Laser">
+        <font color=#FF5555>Laser</font>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		 Lv.<select data-element="laser" class="levelselector">
+		<option value="0">--</option>
+		<option value="1">Lv.1</option>
+		<option value="2">Lv.2</option>
+		<option value="3">Lv.3</option>
+		<option value="4">Lv.4</option>
+		<option value="5">Lv.5</option>
+		</select>
+		<sub class="spoiler" data-info="#laserinfo">
+			(+)
+		</sub>
+			<div id="laserinfo" class="infoslider" hidden text-align="left">
+				<span class="elementdescription">
+				<i>Characters capable of fighting multiple opponents at once with wide-spreading attacks and usually high-tech gear belong here. Laser attacks often involve a piercing beam traveling in various arcs and directions, but can also include things like short, projectile-like beams and beam sabers or other laser-imbued weaponry.</i>
+				<br><br>
+				<font color=#FF5555>Special Property</font>: Piercing
+				<sub class="spoiler" data-info="#piecinginfo">
+					(+)
+				</sub>
+					<div id="piecinginfo" class="infoslider" hidden text-align="left">
+						<font color=#FF5555>When Activated</font>: Adds 'Cuts Uncuttable Auras' to One Attack for one use.
+						<br><br>
+						<font color=#FF5555>Cooldown</font>: This Effect has a 5 Turn Cooldown between activations.
+					</div>
+				<br><br>
+				<font color=#FF5555>Strengths</font>: Ice, Light, Sonic, Elec, Laser
+				<br>
+				<font color=#FF5555>Weaknesses</font>: Blade, Stone, Sand, Plasma, Bug
+				<br><br>
+				<font color=#FF5555>Lv1</font>: +2 Max CD.
+				<br>
+				<font color=#FF5555>Lv2</font>: +2 Max CD. -1 Required Cooldown to the following effect:<br>
+				Ignores Armor
+				<br>
+				<font color=#FF5555>Lv3</font>: +3 Max CD. -1 Required Cooldown to the following effects:<br>
+				Ignores Armor | Cannot be Intercepted
+				<br>
+				<font color=#FF5555>Lv4</font>: +3 Max CD.-1 Required Cooldown to the following effects:<br>
+				Ignores Armor | Cannot be Intercepted | Cannot be Countered
+				<br>
+				<font color=#FF5555>Lv5</font>: +4 Max CD. -1 Required Cooldown to the following effects:<br>
+				Ignores Armor | Cannot be Intercepted | Cannot be Countered | Cannot be Naturally Avoided
+				</span>
+			</div>
+	</div>
+	<br>
+		<img src="http://imgur.com/tvL43ky.png" alt="Sonic">
+ 		<font color=#EE8877>Sonic</font>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		Lv.<select data-element="sonic" class="levelselector">
+		<option value="0">--</option>
+		<option value="1">Lv.1</option>
+		<option value="2">Lv.2</option>
+		<option value="3">Lv.3</option>
+		<option value="4">Lv.4</option>
+		<option value="5">Lv.5</option>
+		</select>
+		<sub class="spoiler" data-info="#sonicinfo">
+			(+)
+		</sub>
+			<div id="sonicinfo" class="infoslider" hidden text-align="left">
+				<span class="elementdescription">
+				<i>Specialty with or unique affiliation to sound are a definitive trait of sonic characters. Sonic attacks are often difficult to predict, difficult to evade, difficult to track, and many times produce an echo-like effect that continues to keep enemies off balance and disoriented.</i>
+				<br><br>
+				<font color=#EE8877>Special Property</font>: Confuse
+				<sub class="spoiler" data-info="#confuseinfo">
+					(+)
+				</sub>
+					<div id="confuseinfo" class="infoslider" hidden text-align="left">
+						<font color=#EE8877>Status Effect</font>: Costs 20 Damage to add to a Sonic Attack. <font color=#EE8877>Requires Sonic Lv2 or Higher</font>.
+						<br><br>
+						<font color=#EE8877>Minimum Cooldown</font>: 2 Turns
+						<br><br>
+						<font color=#EE8877>Confuse</font>: For 2 turns, the afflicted Navi must use all attack slots available to them and every even attack used hits themselves instead of any other targets. Once ended, a Navi cannot be Confused for 4 turns.
+					</div>
+					<br><br>
+					<font color=#EE8877>Strengths</font>: Blade, Shadow, Sniper, Elec, Sonic
+					<br>
+					<font color=#EE8877>Weaknesses</font>: Sand, Light, Dark, Laser, Bug
+					<br><br>
+					<font color=#EE8877>Lv1</font>: Add Hits All or Cannot be Countered to One Attack (5 Turn CD).<br> 
+					+10 Damage.
+					<br>
+					<font color=#EE8877>Lv2</font>: Add Hits All or Cannot be Countered to One Attack (4 Turn CD).<br> 
+					+20 Damage.
+					<br>
+					<font color=#EE8877>Lv3</font>: Add Hits All or Cannot be Countered to One Attack (3 Turn CD).<br> 
+					+30 Damage.
+					<br>
+					<font color=#EE8877>Lv4</font>: Add Hits All or Cannot be Countered to One Attack (2 Turn CD). <br> 
+					+40 Damage.
+					<br>
+					<font color=#EE8877>Lv5</font>: Add Hits All or Cannot be Countered to One Attack (1 Turn CD).<br> 
+					+50 Damage.
+					</span>
+				</div>
+	<br><br>
+		<img src="http://imgur.com/CGWWpQc.png" alt="Break">
+        <font color=#CC9977>Break</font>
+				&nbsp;&nbsp;&nbsp;&nbsp;
+		Lv.<select data-element="break" class="levelselector">
+		<option value="0">--</option>
+		<option value="1">Lv.1</option>
+		<option value="2">Lv.2</option>
+		<option value="3">Lv.3</option>
+		<option value="4">Lv.4</option>
+		<option value="5">Lv.5</option>
+		</select>
+		<sub class="spoiler" data-info="#breakinfo">
+			(+)
+		</sub>
+			<div id="breakinfo" class="infoslider" hidden text-align="left">
+				<span class="elementdescription">
+				<i>The pinnacle of raw power. Break element characters are unstoppable forces that can power through presumably any type of defense, and break element attacks are no different.</i>
+				<br><br>
+				<font color=#CC9977>Special Property</font>: Unstoppable
+				<sub class="spoiler" data-info="#unstopableinfo">
+					(+)
+				</sub>
+					<div id="unstopableinfo" class="infoslider" hidden text-align="left">
+						<font color=#CC9977>When Activated</font>: Adds 'Breaks Unbreakable Shields' to One Attack for one use.
+						<br><br>
+						<font color=#CC9977>Cooldown</font>: This Effect has a 5 Turn Cooldown between activations.
+					</div>
+					<br><br>
+					<font color=#CC9977>Strengths</font>: Blade, Metal, Stone, Ice, Break
+					<br>
+					<font color=#CC9977>Weaknesses</font>: Sniper, Shadow, Fire, Plasma, Bug
+					<br><br>
+					<font color=#CC9977>Lv1</font>: Damage cannot be reduced below 5%. +10 Break Damage.
+					<br>
+					<font color=#CC9977>Lv2</font>: Damage cannot be reduced below 10%. +20 Break Damage.
+					<br>
+					<font color=#CC9977>Lv3</font>: Damage cannot be reduced below 15%. +30 Break Damage. 
+					<br>
+					<font color=#CC9977>Lv4</font>: Damage cannot be reduced below 20%. +40 Break Damage. 
+					<br>
+					<font color=#CC9977>Lv5</font>: Damage cannot be reduced below 25%. +50 Break Damage.
+					</span>
+				</div>
+
+	<br><br>
+	<div class="info">
+		<img src="http://imgur.com/GUVjIvS.png" alt="Sand">
+		<font color=#D2B48C>Sand</font>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+				Lv.<select data-element="sand" class="levelselector">
+		<option value="0">--</option>
+		<option value="1">Lv.1</option>
+		<option value="2">Lv.2</option>
+		<option value="3">Lv.3</option>
+		<option value="4">Lv.4</option>
+		<option value="5">Lv.5</option>
+		</select>
+		<sub class="spoiler" data-info="#sandinfo">
+			(+)
+		</sub>
+			<div id="sandinfo" class="infoslider" hidden text-align="left">
+				<span class="elementdescription">
+				<i>Shape-shifting characters, those with a close affinity to a beach or dessert, or even those with mirage-producing abilities may belong to this element. Sand attacks can vary in style, but it's not uncommon for them to slow down an enemy, debilitate them, or in some way provide a defensive advantage for the user.</i>
+				<br><br>
+				<font color=#D2B48C>Special Property</font>: Slow 
+				<sub class="spoiler" data-info="#slowinfo">
+					(+)
+				</sub>
+					<div id="slowinfo" class="infoslider" hidden text-align="left">
+						<font color=#D2B48C>When Activated</font>: One Target is unavoidably inflicted with -1 Attack Slot for 1 Turn.
+						<br><br>
+						<font color=#D2B48C>Cooldown</font>: This Effect has a 5 Turn Cooldown between activations.
+					</div>
+					<br><br>
+					<font color=#D2B48C>Strengths</font>: Sonic, Break, Wood, Sniper, Sand
+					<br>
+					<font color=#D2B48C>Weaknesses</font>: Fire, Aqua, Wind, Toxic, Bug
+					<br><br>
+					<font color=#D2B48C>Lv1</font>: -
+					<br>
+					<font color=#D2B48C>Lv2</font>: -1 Required Cooldown to Damage Reduction Effects.
+					<br>
+					<font color=#D2B48C>Lv3</font>: -1 Required Cooldown to Damage Reduction Effects.<br>
+					-1 Required Cooldown to Attack Slot Reduction Effects. 
+					<br>
+					<font color=#D2B48C>Lv4</font>: Change the Panels to Sand for 3 Turns (Once per Battle).<br>
+					-1 Required Cooldown to Damage Reduction Effects.<br>
+					-1 Required Cooldown to Attack Slot Reduction Effects. 
+					<br>
+					<font color=#D2B48C>Lv5</font>: Change and Lock the Panels as Sand for 3 Turns (Once per Battle).<br>
+					-1 Required Cooldown to Damage Reduction Effects.<br>
+					-1 Required Cooldown to Attack Slot Reduction Effects.
+					</span>
+				</div>
+	</div>
+	<br>
+	<div class="info">
+		<img src="http://imgur.com/Pov9EZH.png" alt="Blade">
+ 		<font color=#FFFFCC>Blade</font>
+			&nbsp;&nbsp;&nbsp;&nbsp;
+			Lv.<select data-element="blade" class="levelselector">
+		<option value="0">--</option>
+		<option value="1">Lv.1</option>
+		<option value="2">Lv.2</option>
+		<option value="3">Lv.3</option>
+		<option value="4">Lv.4</option>
+		<option value="5">Lv.5</option>
+		</select>
+		<sub class="spoiler" data-info="#bladeinfo">
+			(+)
+		</sub>
+			<div id="bladeinfo" class="infoslider" hidden text-align="left">
+				<span class="elementdescription">
+				<i>Those that specialized in combat with a blade - be it at range or up close and personal - belong to this element. Their technique is precise and their form is keen, so they're able to spot the flaws in their enemy's moves and punish them accordingly.</i>
+				<br><br>
+				<font color=#FFFFCC>Strengths</font>: Laser, Wood, Shadow, Toxic, Blade
+				<br>
+				<font color=#FFFFCC>Weaknesses</font>: Elec, Break, Sonic, Sand, Bug
+				<br><br>
+				<font color=#FFFFCC>Lv1</font>: Counters can ignore "Cannot be Countered" (Once per Turn).
+				<br>
+				<font color=#FFFFCC>Lv2</font>: Counters can ignore "Cannot be Countered" (Once per Turn).<br>
+				Counters can be triggered +1 Time per turn.
+				<br>
+				<font color=#FFFFCC>Lv3</font>: Counters can ignore "Cannot be Countered" (Once per Turn).<br>
+				Counters can be triggered +2 Times per turn.
+				<br>
+				<font color=#FFFFCC>Lv4</font>: Counters can ignore "Cannot be Countered" (Twice per Turn).<br>
+				Counters can be triggered +2 Times per turn.
+				<br>
+				<font color=#FFFFCC>Lv5</font>: Counters can ignore "Cannot be Countered" (Twice per Turn).<br>
+				Counters can be triggered +2 Times per turn.<br>
+				+1 Use to One Counter Skill.
+				</span>
+			</div>
+	</div>
+	<br>
+	<div class="info">
+    	<img src="http://imgur.com/nBOL8i5.png" alt="Light">
+		<font color=#BBEEEE>Light</font>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+				Lv.<select  data-element="light" class="levelselector">
+		<option value="0">--</option>
+		<option value="1">Lv.1</option>
+		<option value="2">Lv.2</option>
+		<option value="3">Lv.3</option>
+		<option value="4">Lv.4</option>
+		<option value="5">Lv.5</option>
+		</select>
+		<sub class="spoiler" data-info="#lightinfo">
+			(+)
+		</sub>
+			<div id="lightinfo" class="infoslider" hidden text-align="left">
+				<span class="elementdescription">
+				<i>Having affiliation or manipulation over light does not necessarily mean one belongs to that karma state. Many darkmongers can still make use of its unique strength and transcending might, just like any other character.</i>
+				<br><br>
+				<font color=#BBEEEE>Special Property</font>: Light Monger
+				<sub class="spoiler" data-info="#lightmongerinfo">
+					(+)
+				</sub>
+					<div id="lightmongerinfo" class="infoslider" hidden text-align="left">
+						<font color=#BBEEEE>Passive Effect</font>: +50 Karma
+					</div>
+					<br><br>
+					<font color=#BBEEEE>Strengths</font>: Blade, Fire, Shadow, Dark, Light
+					<br>
+					<font color=#BBEEEE>Weaknesses</font>: Break, Plasma, Sniper, Toxic, Bug
+					<br><br>
+					<font color=#BBEEEE>Lv1</font>: +1 Hyper Attack Use.
+					<br>
+					<font color=#BBEEEE>Lv2</font>: +1 Hyper Attack Use. +10 Light Damage.
+					<br>
+					<font color=#BBEEEE>Lv3</font>: +1 Hyper Attack Use. +20 Light Damage.<br>
+					+1 Turn to One Hypermode.
+					<br>
+					<font color=#BBEEEE>Lv4</font>: +1 Hyper Attack Use. +30 Light Damage.<br>
+					+1 Turn to One Hypermode.
+					<br>
+					<font color=#BBEEEE>Lv5</font>: +2 Hyper Attack Use. +30 Light Damage.<br>
+					+1 Turn to One Hypermode.<br>
+					-1 CD to One Light Attack.
+					</span>
+				</div>
+	</div>
+	<br>
+	<div class="info">
+		<img src="http://imgur.com/BXKvoPr.png" alt="Wind">
+        <font color=#87CEEB>Wind</font>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+				Lv.<select  data-element="wind" class="levelselector">
+		<option value="0">--</option>
+		<option value="1">Lv.1</option>
+		<option value="2">Lv.2</option>
+		<option value="3">Lv.3</option>
+		<option value="4">Lv.4</option>
+		<option value="5">Lv.5</option>
+		</select>
+		<sub class="spoiler" data-info="#windinfo">
+			(+)
+		</sub>
+			<div id="windinfo" class="infoslider" hidden text-align="left">
+				<span class="elementdescription">
+				<i>Characters that can fly, move swiftly, command the weather, or (to a certain degree) telekinetically interact with objects belong here. Wind attacks often provide little power but great utility, though there are always exceptions.</i>
+				<br><br>
+				<font color=#87CEEB>Special Property</font>: Multi-Element
+				<sub class="spoiler" data-info="#multieleminfo">
+					(+)
+				</sub>
+					<div id="multieleminfo" class="infoslider" hidden text-align="left">
+						<font color=#87CEEB>Status Effect</font>: Automatically applied to Wind Attacks.
+						<br><br>
+						<font color=#87CEEB>Multi-Element</font>: Whenever a Wind element attack is used on non-Normal panels, that attack gains the element of those panels in addition to Wind Element.
+					</div>
+					<br><br>
+					<font color=#87CEEB>Strengths</font>: Sand, Sniper, Break, Wood, Wind
+					<br>
+					<font color=#87CEEB>Weaknesses</font>: Blade, Metal, Stone, Sonic, Bug
+					<br><br>
+					<font color=#87CEEB>Lv1</font>: Attacks with multiple elements deal +5% Damage.
+					<br>
+					<font color=#87CEEB>Lv2</font>: Attacks with multiple elements deal +5% Damage.<br>
+					Ignore Negative Panel Effects for 1 Turn (5 Turn CD).
+					<br>
+					<font color=#87CEEB>Lv3</font>: Attacks with multiple elements deal +10% Damage.<br>
+					Ignore Negative Panel Effects for 1 Turn (Two Separate Instances; 5 CD each). 
+					<br>
+					<font color=#87CEEB>Lv4</font></font>: Attacks with multiple elements deal +10% Damage.<br>
+					Ignore Negative Panel Effects for 1 Turn (Two Separate Instances; 3 CD each).<br>
+					Add "Destroys Auras/Barriers" to One Attack (Once per Battle).
+					<br>
+					<font color=#87CEEB>Lv5</font>: Attacks with multiple elements deal +10% Damage.<br>
+					Ignore Negative Panel Effects.<br>
+					Remove all active Barriers/Auras from the field at will (Once per Battle).
+					</span>
+				</div>
+	</div>
+	<br>
+	<div class="info">
+		<img src="http://imgur.com/gkTNQcL.png" alt="Ice">
+        <font color=#00FFFF>Ice</font>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+				Lv.<select data-element="ice" class="levelselector">
+		<option value="0">--</option>
+		<option value="1">Lv.1</option>
+		<option value="2">Lv.2</option>
+		<option value="3">Lv.3</option>
+		<option value="4">Lv.4</option>
+		<option value="5">Lv.5</option>
+		</select>
+		<sub class="spoiler" data-info="#iceinfo">
+			(+)
+		</sub>
+			<div id="iceinfo" class="infoslider" hidden text-align="left">
+				<span class="elementdescription">
+				<i>Ice characters can withstand cold temperatures, some are even composed of it or can control it. Ice attacks focus mostly on completely debilitating enemies or causing them to lose balance and break their practiced patterns.</i>
+				<br><br>
+				<font color=#00FFFF>Special Property</font>: Freeze
+				<sub class="spoiler" data-info="#freezeinfo">
+						(+)
+				</sub>
+					<div id="freezeinfo" class="infoslider" hidden text-align="left">
+						<font color=#00FFFF>Status Effect</font>: Costs 20 Damage to add to an Ice Attack. <font color=#00FFFF>Requires Ice Lv2 or Higher</font>.
+						<br><br>
+						<font color=#00FFFF>Minimum Cooldown</font>: 1 Turn
+						<br><br>
+						<font color=#00FFFF>Freeze</font>: For 1 turn, if the Freezing attack is C-Ranged, the afflicted Navi cannot use Shields. If the Freezing attack is S-Ranged, the afflicted Navi cannot use Dodges. If the attack is dual-ranged, the user must choose which avoid the afflicted Navi cannot use. Once ended, a Navi cannot be Frozen for 2 turns.
+					</div>
+					<br><br>
+					<font color=#00FFFF>Strengths</font>: Wind, Wood, Dark, Plasma, Ice
+					<br>
+					<font color=#00FFFF>Weaknesses</font>: Stone, Break, Light, Sonic, Bug
+					<br><br>
+					<font color=#00FFFF>Lv1</font>: +10 Armor.
+					<br>
+					<font color=#00FFFF>Lv2</font>: +20 Armor. Enemies have -1 Attack Slot on their first turn.
+					<br>
+					<font color=#00FFFF>Lv3</font>: +30 Armor. Enemies have -1 Attack Slot on their first two turns. 
+					<br>
+					<font color=#00FFFF>Lv4</font>: +40 Armor. Enemies have -2 Attack Slots on their first two turns. 
+					<br>
+					<font color=#00FFFF>Lv5</font>: +50 Armor. Enemies have -2 Attack Slots on their first two turns.<br>
+					Immune to Freeze.
+					</span>
+				</div>
+	</div>
+	<br>
+	<div class="info">
+		<img src="http://imgur.com/hlVKolp.png" alt="Plasma">
+ 		<font color=#6666FF>Plasma</font>
+		&nbsp;
+		Lv.<select data-element="plasma" class="levelselector">
+		<option value="0">--</option>
+		<option value="1">Lv.1</option>
+		<option value="2">Lv.2</option>
+		<option value="3">Lv.3</option>
+		<option value="4">Lv.4</option>
+		<option value="5">Lv.5</option>
+		</select>
+		<sub class="spoiler" data-info="#plasmainfo">
+			(+)
+		</sub>
+			<div id="plasmainfo" class="infoslider" hidden text-align="left">
+			<span class="elementdescription">
+			<i>Characters that can create, store, absorb, and unleash energy define this element. Energy-based attacks, equipment, and objects are also usually directly related to the plasma element.</i>
+			<br><br>
+			<font color=#6666FF>Strengths</font>: Shadow, Sand, Stone, Metal, Plasma
+			<br>
+			<font color=#6666FF>Weaknesses</font>: Laser, Break, Sniper, Sonic, Bug
+			<br><br>
+			<font color=#6666FF>Lv1</font>: 5 Turn Charge Attacks deal +25% Total Damage.
+			<br>
+			<font color=#6666FF>Lv2</font>: 4+ Turn Charge Attacks deal +25% Total Damage.
+			<br>
+			<font color=#6666FF>Lv3</font>: 3+ Turn Charge Attacks deal +25% Total Damage.
+			<br>
+			<font color=#6666FF>Lv4</font>: 2+ Turn Charge Attacks deal +25% Total Damage.
+			<br>
+			<font color=#6666FF>Lv5</font>: All Charged Attacks deal +25% Total Damage.
+			</span>
+		</div>
+	</div>
+	<br>
+	<div class="info">
+		<img src="http://imgur.com/4ZAxjNi.png" alt="Seeking">
+		<font color=#338833>Seeking</font>
+				Lv.<select data-element="seeking" class="levelselector">
+		<option value="0">--</option>
+		<option value="1">Lv.1</option>
+		<option value="2">Lv.2</option>
+		<option value="3">Lv.3</option>
+		<option value="4">Lv.4</option>
+		<option value="5">Lv.5</option>
+		</select>
+		<sub class="spoiler" data-info="#seekinginfo">
+			(+)
+		</sub>
+			<div id="seekinginfo" class="infoslider" hidden text-align="left">
+			<span class="elementdescription">
+			<i>Cunning tacticians that can think several moves ahead of their opponent and lock them down with a checkmate. Seeking element characters often show great intelligence in multiple fields that regular characters pale in comparison to, and seeking element attacks often have a method of tracking, locking on to, homing in on, or varying based on their target.</i>
+			<br><br>
+			<font color=#338833>Special Property</font>: Precision
+			<sub class="spoiler" data-info="#precisioninfo">
+				(+)
+			</sub>
+				<div id="precisioninfo" class="infoslider" hidden text-align="left">
+					<font color=#338833>When Activated</font>: Adds 'Fully Undodgeable' to One Attack for one use.
+					<br><br>
+					<font color=#338833>Cooldown</font>: This Effect has a 5 Turn Cooldown between activations.
+				</div>
+				<br><br>
+				<font color=#338833>Strengths</font>: Break, Sand, Light, Metal, Sniper
+				<br>
+				<font color=#338833>Weaknesses</font>: Wind, Aqua, Dark, Laser, Bug
+				<br><br>
+				<font color=#338833>Lv1</font>: +50 Damage to One Attack (Once per Turn).
+				<br>
+				<font color=#338833>Lv2</font>: +100 Damage to One Attack (Once per Turn).
+				<br>
+				<font color=#338833>Lv3</font>: +150 Damage to One Attack (Once per Turn).<br>
+				+1 Use to Aiming Skills.
+				<br>
+				<font color=#338833>Lv4</font>: +200 Damage to One Attack (Once per Turn).<br>
+				+1 Use to Aiming Skills. 
+				<br>
+				<font color=#338833>Lv5</font>: +250 Damage to One Attack (Once per Turn).<br>
+				+2 Uses to Aiming Skills.
+				</span>
+			</div>
+	</div>
+	<br>
+	<div class="info">
+		<img src="http://imgur.com/K6EUsQk.png" alt="Toxic">
+        <font color=#99CC99>Toxic</font>
+				&nbsp;&nbsp;&nbsp;&nbsp;
+			Lv.<select data-element="toxic" class="levelselector">
+			<option value="0">--</option>
+			<option value="1">Lv.1</option>
+			<option value="2">Lv.2</option>
+			<option value="3">Lv.3</option>
+			<option value="4">Lv.4</option>
+			<option value="5">Lv.5</option>
+			</select>
+		<sub class="spoiler" data-info="#toxicinfo">
+			(+)
+		</sub>
+			<div id="toxicinfo" class="infoslider" hidden text-align="left">
+				<span class="elementdescription">
+				<i>Toxic element characters can be anything from a mad chemist to a contagion-spreading host. Toxic attacks often focus on slowly wearing down their enemy so that they suffer the agony rather than ending it quickly for them.</i>
+				<br><br>
+				<font color=#99CC99>Special Property</font>: Poison
+				<sub class="spoiler" data-info="#poisoninfo">
+					(+)
+				</sub>
+					<div id="poisoninfo" class="infoslider" hidden text-align="left">
+						<font color=#99CC99>Status Effect</font>: Costs 20 Damage to add to a Toxic Attack. <font color=#99CC99>Requires Toxic Lv2 or Higher</font>.
+						<br><br>
+						<font color=#99CC99>Minimum Cooldown</font>: 1 Turn
+						<br><br>
+						<font color=#99CC99>Poison</font>: For 2 turns, the afflicted Navi takes 10 Damage/turn and has -10 Damage (final total). If they're hit by Poison again, they take 10 more Damage/turn, have -10 more Damage, and if it's the first time they've taken Poison in the turn the Damage/Damage reduction last +1 turn, to a max of 50 Damage/turn, -50 Damage, and 6 turns. If the Damage/Damage reduction are capped, the duration cannot be increased. If the Damage/Damage reduction is at 30 or more, they can't use Undershirt effects. Once ended, a Navi cannot be Poisoned for 2 turns.
+					</div>
+					<br><br>
+					<font color=#99CC99>Strengths</font>: Wood, Wind, Shadow, Dark, Toxic
+					<br>
+					<font color=#99CC99>Weaknesses</font>: Ice, Fire, Plasma, Aqua, Bug 
+					<br><br>
+					<font color=#99CC99>Lv1</font>: Enemies take 40 Unavoidable damage per turn.
+					<br>
+					<font color=#99CC99>Lv2</font>: Enemies take 70 Unavoidable damage per turn.
+					<br>
+					<font color=#99CC99>Lv3</font>: Enemies take 100 Unavoidable damage per turn.
+					<br>
+					<font color=#99CC99>Lv4</font>: Enemies take 130 Unavoidable damage per turn.
+					<br>
+					<font color=#99CC99>Lv5</font>: Enemies take 160 Unavoidable damage per turn.<br>
+					Immune to Poison.
+					</span>
+				</div>
+		</div>
+	</div>
+</div>
+	<br>
+	Net Strengths: <span class="greentext">You take x0.7 damage from these elements.</span>
+	<br>
+	Net Weaknesses: <span class="greentext">These deal x1.3 damage to you.</span>
+	<br>
+    Effects:
+    <div id="normaleffects">
+    	<div id="normal-specialproperty-0"hidden>
+    		<font color=#808080>Special Property</font>: Neutrality
+			<font color=#808080>Passive Effect</font>: Remove 1 Weakness from each element
+		</div>
+
+    	<span id="normal-1" hidden><font color=#808080><img src="http://imgur.com/EXFaudT.png" alt="Normal"> Normal Lv1</font>: +100 HP. +10 Damage.</span>
+
+		<span id="normal-2" hidden><font color=#808080><img src="http://imgur.com/EXFaudT.png" alt="Normal"> Normal Lv2</font>: +200 HP. +20 Damage.</span>
+
+		<span id="normal-3" hidden><font color=#808080><img src="http://imgur.com/EXFaudT.png" alt="Normal"> Normal Lv3</font>: +300 HP. +30 Damage.</span>
+
+		<span id="normal-4" hidden><font color=#808080><img src="http://imgur.com/EXFaudT.png" alt="Normal"> Normal Lv4</font>: +400 HP. +40 Damage.</span>
+
+		<span id="normal-5" hidden><font color=#808080><img src="http://imgur.com/EXFaudT.png" alt="Normal"> Normal Lv5</font>: +400 HP. +40 Damage. +1 Program Slot.</span>
+    </div>
+    <div id="fireeffects">
+    	<div id="fire-specialproperty-1" hidden>
+    		<font color=#FF5555>Special Property</font>: Burn
+    		<br>
+			<font color=#FF5555>Status Effect</font>: Costs 20 Damage to add to a Fire Attack. <font color=#FF5555>Requires Fire Lv2 or Higher</font>.
+			<br><br>
+			Minimum Cooldown: Once per Turn (-1 Max CD)
+			<br><br>
+			<font color=#FF5555>Burn</font>: For 3 turns, afflicted Navi takes 50 Damage per turn and cannot use Undershirt effects. On the first turn, that Navi's attacks have -50 Damage. Once ended, a Navi cannot be Burned for 2 turns.
+		</div>
+		<span id="fire-1" hidden><font color=#FF5555><img src="http://imgur.com/o5GQfsn.png" alt="Fire"> Fire Lv1</font>: +20 Damage.</span>
+
+		<span id="fire-2" hidden><font color=#FF5555><img src="http://imgur.com/o5GQfsn.png" alt="Fire"> Fire Lv2</font>: +40 Damage.</span>
+
+		<span id="fire-3" hidden><font color=#FF5555><img src="http://imgur.com/o5GQfsn.png" alt="Fire"> Fire Lv3</font>: +60 Damage.</span>
+
+		<span id="fire-4" hidden><font color=#FF5555><img src="http://imgur.com/o5GQfsn.png" alt="Fire"> Fire Lv4</font>: +80 Damage.</span>
+
+		<span id="fire-5" hidden><font color=#FF5555><img src="http://imgur.com/o5GQfsn.png" alt="Fire"> Fire Lv5</font>: +80 Damage. Immune to Burn.</span>
+    </div>
+
+    <div id="aquaeffects">
+    	<div id="aqua-specialproperty-1" hidden>
+    		<font color=#BBBBFF>Special Property</font>: Soak
+			<br>
+			<font color=#BBBBFF>Status Effect</font>: Costs 20 Damage to add to an Aqua Attack. <font color=#BBBBFF>Requires Aqua Lv2 or Higher</font>.
+			<br>
+			<font color=#BBBBFF>Minimum Cooldown</font>: 1 Turn
+			<br><br>
+			<font color=#BBBBFF>Soak</font>: For 2 turns, the afflicted Navi's attacks deal 1/2 Damage (final total) and they gain a weakness to the Elec Element. Once ended, a Navi cannot be Soaked for 2 turns.
+		</div>
+
+		<div id="aqua-specialproperty-2" hidden>
+			<br>
+			<font color=#BBBBFF>Special Property</font>: Bubble
+			<br>
+			<font color=#BBBBFF>Status Effect</font>: Costs 20 Damage to add to an Aqua Attack. <font color=#BBBBFF>Requires Aqua Lv5</font>.
+			<br>
+			<font color=#BBBBFF>Minimum Cooldown</font>: 1 Turn
+			<br><br>
+			<font color=#BBBBFF>Bubble</font>: Next turn, the afflicted Navi cannot attack unless hit by another attack before then. Once ended, a Navi cannot be Bubbled for 2 turns.
+		</div>
+
+		<span id="aqua-1" hidden><font color=#BBBBFF><img src="http://imgur.com/AesLAg5.png" alt="Aqua"> Aqua Lv1</font>: +1 Natural Dodge (5 Turn CD).</span>
+
+		<span id="aqua-2" hidden><font color=#BBBBFF><img src="http://imgur.com/AesLAg5.png" alt="Aqua"> Aqua Lv2</font>: +1 Natural Dodge (4 Turn CD).</span>
+
+		<span id="aqua-3" hidden><font color=#BBBBFF><img src="http://imgur.com/AesLAg5.png" alt="Aqua"> Aqua Lv3</font>: +1 Natural Dodge (3 Turn CD).</span> 
+
+		<span id="aqua-4" hidden><font color=#BBBBFF><img src="http://imgur.com/AesLAg5.png" alt="Aqua"> Aqua Lv4</font>: +2 Natural Dodges (Separate 5 Turn CDs).
+			<br>Panels start as Ocean (Lasts 3 Turns).</span>
+
+		<span id="aqua-5" hidden><font color=#BBBBFF><img src="http://imgur.com/AesLAg5.png" alt="Aqua"> Aqua Lv5</font>: +2 Natural Dodges (Separate 5 Turn CDs).
+			<br>Panels start as Ocean (Locked. Lasts 3 Turns).
+			<br>Immune to Soak and Bubble.</span>
+    </div>
+
+    <div id="eleceffects">
+		<div id="elec-specialproperty-1" hidden>
+			<font color=#FFFF00>Special Property</font>: Shock
+			<font color=#FFFF00>Status Effect</font>:Costs 20 Damage to add to an Elec Attack. <font color=#FFFF00>Requires Elec Lv2 or Higher</font>.
+			<br>
+			<font color=#FFFF00>Minimum Cooldown</font>: 1 Turn
+			<br><br>
+			<font color=#FFFF00>Shock</font>: For 3 turns, the afflicted Navi takes damage equal to 3% of their current HP each time they avoid an attack. Once ended, a Navi cannot be Shocked for 2 turns.
+		</div>
+		<div id="elec-specialproperty-2" hidden>
+			<font color=#FFFF00>Special Property</font>: Paralyze
+			<font color=#FFFF00>Status Effect</font>: Costs 20 Damage to add to an Elec Attack. Requires Elec Lv5.
+			<br>
+			Minimum Cooldown: 1 Turn
+			<br><br>
+			<font color=#FFFF00>Paralyze</font>: Afflicted Navi cannot avoid the next attack aimed at them. If no further attacks hit them before their turn, they have -1 attack slot for that turn. Does not stack. Once ended, a Navi cannot be Paralyzed for 2 turns.
+		</div>
+
+    	<span id="elec-1" hidden><font color=#FFFF00><img src="http://imgur.com/Qzz5Gd9.png" alt="Electricity"> Elec Lv1</font>: +1 Attack Slot (2 Turn CD).</span>
+
+		<span id="elec-2" hidden><font color=#FFFF00><img src="http://imgur.com/Qzz5Gd9.png" alt="Electricity"> Elec Lv2</font>: +1 Attack Slot on Even Turns.</span>
+
+		<span id="elec-3" hidden><font color=#FFFF00><img src="http://imgur.com/Qzz5Gd9.png" alt="Electricity"> Elec Lv3</font>: +1 Attack Slot.</span>
+
+		<span id="elec-4" hidden><font color=#FFFF00><img src="http://imgur.com/Qzz5Gd9.png" alt="Electricity"> Elec Lv4</font>: +1 Attack Slot. +1 More on Even Turns.</span>
+
+		<span id="elec-5" hidden><font color=#FFFF00><img src="http://imgur.com/Qzz5Gd9.png" alt="Electricity"> Elec Lv5</font>: +1 Attack Slot. +1 More on Even Turns.
+		<br>Immune to Shock and Paralyze.</span>
+    </div>
+
+    <divdiv id="woodeffects">
+    	<span id="wood-1" hidden><font color=#66AA66><img src="http://imgur.com/o3dw5rx.png" alt="Wood"> Wood Lv1</font>: +40 Regen.</span>
+
+		<span id="wood-2" hidden><font color=#66AA66><img src="http://imgur.com/o3dw5rx.png" alt="Wood"> Wood Lv2</font>: +80 Regen.</span>
+
+		<span id="wood-3" hidden><font color=#66AA66><img src="http://imgur.com/o3dw5rx.png" alt="Wood"> Wood Lv3</font>: +120 Regen.</span> 
+
+		<span id="wood-4" hidden><font color=#66AA66><img src="http://imgur.com/o3dw5rx.png" alt="Wood"> Wood Lv4</font>: +160 Regen.</span>
+
+		<span id="wood-5" hidden><font color=#66AA66><img src="http://imgur.com/o3dw5rx.png" alt="Wood"> Wood Lv5</font>: +160 Regen. When you fall under 25% of your Max HP, you regain 20% of it (Once per Battle).</span>
+    </div>
+
+    <div id="metaleffects">
+		<span id="metal-1" hidden><font color=#AAAA88><img src="http://imgur.com/UeaWWzt.png" alt="Metal"> Metal Lv1</font>: +10 Armor. 5% of your Base Damage is added as Bonus Armor.</span>
+
+		<span id="metal-2" hidden><font color=#AAAA88><img src="http://imgur.com/UeaWWzt.png" alt="Metal"> Metal Lv2</font>: +20 Armor. 5% of your Base Damage is added as Bonus Armor.</span>
+
+		<span id="metal-3" hidden><font color=#AAAA88><img src="http://imgur.com/UeaWWzt.png" alt="Metal"> Metal Lv3</font>: +30 Armor. 5% of your Base Damage is added as Bonus Armor.</span>
+
+		<span id="metal-4" hidden><font color=#AAAA88><img src="http://imgur.com/UeaWWzt.png" alt="Metal"> Metal Lv4</font>: +40 Armor. 5% of your Base Damage is added as Bonus Armor.</span> 
+
+		<span id="metal-5" hidden><font color=#AAAA88><img src="http://imgur.com/UeaWWzt.png" alt="Metal"> Metal Lv5</font>: +50 Armor. 5% of your Base Damage is added as Bonus Armor.</span>
+    </div>
+
+    <div id="stoneeffects">
+    	<span id="stone-1" hidden><font color=#999999><img src="http://imgur.com/ay4Uilz.png" alt="Stone"> Stone Lv1</font>: +150 HP. User takes 2% less damage.</span>
+		
+		<span id="stone-2" hidden><font color=#999999><img src="http://imgur.com/ay4Uilz.png" alt="Stone"> Stone Lv2</font>: +300 HP. User takes 4% less damage.</span>
+		
+		<span id="stone-3" hidden><font color=#999999><img src="http://imgur.com/ay4Uilz.png" alt="Stone"> Stone Lv3</font>: +450 HP. User takes 6% less damage.</span> 
+		
+		<span id="stone-4" hidden><font color=#999999><img src="http://imgur.com/ay4Uilz.png" alt="Stone"> Stone Lv4</font>: +600 HP. User takes 8% less damage.</span> 
+
+		<span id="stone-5" hidden><font color=#999999><img src="http://imgur.com/ay4Uilz.png" alt="Stone">Stone Lv5</font>: +750 HP. User takes 10% less damage.</span>
+    </div>
+
+    <div id="shadoweffects">
+    	<span id="shadow-1" hidden><font color=#7F5DA9><img src="http://imgur.com/I16VlzR.png" alt="Shadow"> Shadow Lv1</font>: Reduce the damage of an incoming attack by 20% (5 Turn CD).</span>
+		
+		<span id="shadow-2" hidden><font color=#7F5DA9><img src="http://imgur.com/I16VlzR.png" alt="Shadow"> Shadow Lv2</font>: Reduce the damage of an incoming attack by 20% (3 Turn CD).</span>
+		
+		<span id="shadow-3" hidden><font color=#7F5DA9><img src="http://imgur.com/I16VlzR.png" alt="Shadow"> Shadow Lv3</font>: Reduce the damage of an incoming attack by 20% (3 Turn CD).
+		<br>+1 Use to One Avoid Skill. </span>
+		
+		<span id="shadow-4" hidden><font color=#7F5DA9><img src="http://imgur.com/I16VlzR.png" alt="Shadow"> Shadow Lv4</font>: Reduce the damage of an incoming attack by 20% (1 Turn CD).
+		<br>+1 Use to One Avoid Skill. </span>
+		
+		<span id="shadow-5" hidden><font color=#7F5DA9><img src="http://imgur.com/I16VlzR.png" alt="Shadow"> Shadow Lv5</font>: Reduce the damage of an incoming attack by 20% (1 Turn CD).
+		<br>+2 Uses to One Avoid Skill.</span>
+    </div>
+
+    <div id="darkeffects">
+    	<div id="dark-specialproperty-0" hidden>
+    		<font color=#AF5F8A>Special Property</font> : Dark Denizen
+			<font color=#AF5F8A>Passive Effect</font> : -50 Karma
+		</div>
+
+		<span id="dark-1" hidden><font color=#AF5F8A><img src="http://imgur.com/OuPyqhr.png" alt="Dark"> Dark Lv1</font> : +1 Dark Chip Use.</span>
+		
+		<span id="dark-2" hidden><font color=#AF5F8A><img src="http://imgur.com/OuPyqhr.png" alt="Dark"> Dark Lv2</font> : +1 Dark Chip Use. +10 Dark Damage.</span>
+		
+		<span id="dark-3" hidden><font color=#AF5F8A><img src="http://imgur.com/OuPyqhr.png" alt="Dark"> Dark Lv3</font> : +1 Dark Chip Use. +20 Dark Damage.
+		<br>+1 Turn to Darksoul.</span>
+		
+		<span id="dark-4" hidden><font color=#AF5F8A><img src="http://imgur.com/OuPyqhr.png" alt="Dark"> Dark Lv4</font> : +1 Dark Chip Use. +30 Dark Damage.
+		<br>+1 Turn to Darksoul.</span> 
+		
+		<span id="dark-5" hidden><font color=#AF5F8A><img src="http://imgur.com/OuPyqhr.png" alt="Dark"> Dark Lv5</font> : +2 Dark Chip Use. +30 Dark Damage.
+		<br>+1 Turn to Darksoul.
+		<br>-1 CD to One Dark Attack.</span>
+    </div>
+
+    <div id="lasereffects">
+    	<div id="laser-specialproperty-0" hidden>
+    		<font color=#FF5555>Special Property</font>: Piercing
+			<font color=#FF5555>When Activated</font>: Adds 'Cuts Uncuttable Auras' to One Attack for one use.
+			<br>
+			<font color=#FF5555>Cooldown</font>: This Effect has a 5 Turn Cooldown between activations.
+		</div>
+		
+		<span id="laser-1" hidden><font color=#FF5555><img src="http://imgur.com/UY6Hv3W.png" alt="Laser"> Laser Lv1</font>: +2 Max CD.</span>
+		
+		<span id="laser-2" hidden><font color=#FF5555><img src="http://imgur.com/UY6Hv3W.png" alt="Laser"> Laser Lv2</font>: +2 Max CD. -1 Required Cooldown to the following effect:
+		<br>Ignores Armor</span>
+		
+		<span id="laser-3" hidden><font color=#FF5555><img src="http://imgur.com/UY6Hv3W.png" alt="Laser"> Laser Lv3</font>: +3 Max CD. -1 Required Cooldown to the following effects:
+		<br>Ignores Armor | Cannot be Intercepted</span>
+		
+		<span id="laser-4" hidden><font color=#FF5555><img src="http://imgur.com/UY6Hv3W.png" alt="Laser"> Laser Lv4</font>: +3 Max CD.-1 Required Cooldown to the following effects:
+		<br>Ignores Armor | Cannot be Intercepted | Cannot be Countered</span>
+		
+		<span id="laser-5" hidden><font color=#FF5555><img src="http://imgur.com/UY6Hv3W.png" alt="Laser"> Laser Lv5</font>: +4 Max CD. -1 Required Cooldown to the following effects:
+		<br>Ignores Armor | Cannot be Intercepted | Cannot be Countered | Cannot be Naturally Avoided</span>
+    </div>
+
+    <div id="soniceffects">
+    	<div id="sonic-specialproperty-1" hidden>
+    		<font color=#EE8877>Special Property</font>: Confuse
+			<font color=#EE8877>Status Effect</font>: Costs 20 Damage to add to a Sonic Attack. <font color=#EE8877>Requires Sonic Lv2 or Higher</font>.
+			<br>
+			<font color=#EE8877>Minimum Cooldown</font>: 2 Turns
+			<br><br>
+			<font color=#EE8877>Confuse</font>: For 2 turns, the afflicted Navi must use all attack slots available to them and every even attack used hits themselves instead of any other targets. Once ended, a Navi cannot be Confused for 4 turns.
+		</div>
+		
+		<span id="sonic-1" hidden><font color=#EE8877><img src="http://imgur.com/tvL43ky.png" alt="Sonic"> Sonic Lv1</font>: Add Hits All or Cannot be Countered to One Attack (5 Turn CD).
+		<br> +10 Damage.</span>
+		
+		<span id="sonic-2" hidden><font color=#EE8877><img src="http://imgur.com/tvL43ky.png" alt="Sonic"> Sonic Lv2</font>: Add Hits All or Cannot be Countered to One Attack (4 Turn CD).
+		<br> +20 Damage.</span>
+		
+		<span id="sonic-3" hidden><font color=#EE8877><img src="http://imgur.com/tvL43ky.png" alt="Sonic"> Sonic Lv3</font>: Add Hits All or Cannot be Countered to One Attack (3 Turn CD).
+		<br> +30 Damage.</span>
+		
+		<span id="sonic-4" hidden><font color=#EE8877><img src="http://imgur.com/tvL43ky.png" alt="Sonic"> Sonic Lv4</font>: Add Hits All or Cannot be Countered to One Attack (2 Turn CD).
+		<br> +40 Damage.</span>
+		
+		<span id="sonic-5" hidden><font color=#EE8877><img src="http://imgur.com/tvL43ky.png" alt="Sonic"> Sonic Lv5</font>: Add Hits All or Cannot be Countered to One Attack (1 Turn CD).
+		<br> +50 Damage.</span>
+    </div>
+
+    <div id="breakeffects">
+    	<div id="break-specialproperty-0" hidden>
+    		<font color=#CC9977>Special Property</font>: Unstoppable
+			<font color=#CC9977>When Activated</font>: Adds 'Breaks Unbreakable Shields' to One Attack for one use.
+			<br>
+			<font color=#CC9977>Cooldown</font>: This Effect has a 5 Turn Cooldown between activations.
+		</div>
+
+		<span id="break-1" hidden><font color=#CC9977><img src="http://imgur.com/CGWWpQc.png" alt="Break"> Break Lv1</font>: Damage cannot be reduced below 5%. +10 Break Damage.</span>
+		
+		<span id="break-2" hidden><font color=#CC9977><img src="http://imgur.com/CGWWpQc.png" alt="Break"> Break Lv2</font>: Damage cannot be reduced below 10%. +20 Break Damage.</span>
+		
+		<span id="break-3" hidden><font color=#CC9977><img src="http://imgur.com/CGWWpQc.png" alt="Break"> Break Lv3</font>: Damage cannot be reduced below 15%. +30 Break Damage.</span>
+		
+		<span id="break-4" hidden><font color=#CC9977><img src="http://imgur.com/CGWWpQc.png" alt="Break"> Break Lv4</font>: Damage cannot be reduced below 20%. +40 Break Damage.</span>
+		
+		<span id="break-5" hidden><font color=#CC9977><img src="http://imgur.com/CGWWpQc.png" alt="Break"> Break Lv5</font>: Damage cannot be reduced below 25%. +50 Break Damage.</span>
+    </div>
+
+    <div id="sandeffects">
+    	<div id="sand-specialproperty-0" hidden>
+    		<font color=#D2B48C>Special Property</font>: Slow 
+			<font color=#D2B48C>When Activated</font>: One Target is unavoidably inflicted with -1 Attack Slot for 1 Turn.
+			<br><br>
+			<font color=#D2B48C>Cooldown</font>: This Effect has a 5 Turn Cooldown between activations.
+		</div>
+		
+		<span id="sand-1" hidden><font color=#D2B48C><img src="http://imgur.com/GUVjIvS.png" alt="Sand"> Sand Lv1</font>: -</span>
+		
+		<span id="sand-2" hidden><font color=#D2B48C><img src="http://imgur.com/GUVjIvS.png" alt="Sand"> Sand Lv2</font>: -1 Required Cooldown to Damage Reduction Effects.</span>
+		
+		<span id="sand-3" hidden><font color=#D2B48C><img src="http://imgur.com/GUVjIvS.png" alt="Sand"> Sand Lv3</font>: -1 Required Cooldown to Damage Reduction Effects.
+		<br>-1 Required Cooldown to Attack Slot Reduction Effects.</span> 
+		
+		<span id="sand-4" hidden><font color=#D2B48C><img src="http://imgur.com/GUVjIvS.png" alt="Sand"> Sand Lv4</font>: Change the Panels to Sand for 3 Turns (Once per Battle).
+		<br>-1 Required Cooldown to Damage Reduction Effects.
+		<br>-1 Required Cooldown to Attack Slot Reduction Effects.</span> 
+		
+		<span id="sand-5" hidden><font color=#D2B48C><img src="http://imgur.com/GUVjIvS.png" alt="Sand"> Sand Lv5</font>: Change and Lock the Panels as Sand for 3 Turns (Once per Battle).
+		<br>-1 Required Cooldown to Damage Reduction Effects.
+		<br>-1 Required Cooldown to Attack Slot Reduction Effects.</span>
+    </div>
+
+    <div id="bladeeffects">
+		<span id="blade-1" hidden><font color=#FFFFCC><img src="http://imgur.com/Pov9EZH.png" alt="Blade"> Blade Lv1</font>: Counters can ignore "Cannot be Countered" (Once per Turn).</span>
+		
+		<span id="blade-2" hidden><font color=#FFFFCC><img src="http://imgur.com/Pov9EZH.png" alt="Blade"> Blade Lv2</font>: Counters can ignore "Cannot be Countered" (Once per Turn).
+		<br>Counters can be triggered +1 Time per turn.</span>
+		
+		<span id="blade-3" hidden><font color=#FFFFCC><img src="http://imgur.com/Pov9EZH.png" alt="Blade"> Blade Lv3</font>: Counters can ignore "Cannot be Countered" (Once per Turn).
+		<br>Counters can be triggered +2 Times per turn.</span>
+		
+		<span id="blade-4" hidden><font color=#FFFFCC><img src="http://imgur.com/Pov9EZH.png" alt="Blade"> Blade Lv4</font>: Counters can ignore "Cannot be Countered" (Twice per Turn).
+		<br>Counters can be triggered +2 Times per turn.</span>
+		
+		<span id="blade-5" hidden><font color=#FFFFCC><img src="http://imgur.com/Pov9EZH.png" alt="Blade"> Blade Lv5</font>: Counters can ignore "Cannot be Countered" (Twice per Turn).
+		<br>Counters can be triggered +2 Times per turn.
+		<br>+1 Use to One Counter Skill.</span>
+    </div>
+
+    <div id="lighteffects">
+		<div id="light-specialproperty-0" hidden>	
+			<font color=#BBEEEE>Special Property</font>: Light Monger
+			<font color=#BBEEEE>Passive Effect</font>: +50 Karma
+		</div>
+		
+		<span id="light-1" hidden><font color=#BBEEEE><img src="http://imgur.com/nBOL8i5.png" alt="Light"> Light Lv1</font>: +1 Hyper Attack Use.</span>
+		
+		<span id="light-2" hidden><font color=#BBEEEE><img src="http://imgur.com/nBOL8i5.png" alt="Light"> Light Lv2</font>: +1 Hyper Attack Use. +10 Light Damage.</span>
+		
+		<span id="light-3" hidden><font color=#BBEEEE><img src="http://imgur.com/nBOL8i5.png" alt="Light"> Light Lv3</font>: +1 Hyper Attack Use. +20 Light Damage.
+		<br>+1 Turn to One Hypermode.</span>
+		
+		<span id="light-4" hidden><font color=#BBEEEE><img src="http://imgur.com/nBOL8i5.png" alt="Light"> Light Lv4</font>: +1 Hyper Attack Use. +30 Light Damage.
+		<br>+1 Turn to One Hypermode.</span>
+		
+		<span id="light-5" hidden><font color=#BBEEEE><img src="http://imgur.com/nBOL8i5.png" alt="Light"> Light Lv5</font>: +2 Hyper Attack Use. +30 Light Damage.
+		<br>+1 Turn to One Hypermode.
+		<br>-1 CD to One Light Attack.</span>
+    </div>
+
+    <div id="windeffects">
+    	<div id="wind-specialproperty-0" hidden>
+    		<font color=#87CEEB>Special Property</font>: Multi-Element
+			<font color=#87CEEB>Status Effect</font>: Automatically applied to Wind Attacks.
+			<br><br>
+			<font color=#87CEEB>Multi-Element</font>: Whenever a Wind element attack is used on non-Normal panels, that attack gains the element of those panels in addition to Wind Element.
+		</div>
+		
+		<span id="wind-1" hidden><font color=#87CEEB><img src="http://imgur.com/BXKvoPr.png" alt="Wind"> Wind Lv1</font>: Attacks with multiple elements deal +5% Damage.</span>
+		
+		<span id="wind-2" hidden><font color=#87CEEB><img src="http://imgur.com/BXKvoPr.png" alt="Wind"> Wind Lv2</font>: Attacks with multiple elements deal +5% Damage.
+		<br>Ignore Negative Panel Effects for 1 Turn (5 Turn CD).</span>
+		
+		<span id="wind-3" hidden><font color=#87CEEB><img src="http://imgur.com/BXKvoPr.png" alt="Wind"> Wind Lv3</font>: Attacks with multiple elements deal +10% Damage.
+		<br>Ignore Negative Panel Effects for 1 Turn (Two Separate Instances; 5 CD each). </span>
+		
+		<span id="wind-4" hidden><font color=#87CEEB><img src="http://imgur.com/BXKvoPr.png" alt="Wind"> Wind Lv4</font></font>: Attacks with multiple elements deal +10% Damage.
+		<br>Ignore Negative Panel Effects for 1 Turn (Two Separate Instances; 3 CD each).
+		<br>Add "Destroys Auras/Barriers" to One Attack (Once per Battle).</span>
+		
+		<span id="wind-5" hidden><font color=#87CEEB><img src="http://imgur.com/BXKvoPr.png" alt="Wind"> Wind Lv5</font>: Attacks with multiple elements deal +10% Damage.
+		<br>=Ignore Negative Panel Effects.
+		<br>=Remove all active Barriers/Auras from the field at will (Once per Battle).</span>
+    </div>
+
+    <div id="iceeffects">
+    	<div id="ice-specialproperty-1" hidden>
+    		<font color=#00FFFF>Special Property</font>: Freeze
+			<font color=#00FFFF>Status Effect</font>: Costs 20 Damage to add to an Ice Attack. <font color=#00FFFF>Requires Ice Lv2 or Higher</font>.
+			<br>
+			<font color=#00FFFF>Minimum Cooldown</font>: 1 Turn
+			<br><br>
+			<font color=#00FFFF>Freeze</font>: For 1 turn, if the Freezing attack is C-Ranged, the afflicted Navi cannot use Shields. If the Freezing attack is S-Ranged, the afflicted Navi cannot use Dodges. If the attack is dual-ranged, the user must choose which avoid the afflicted Navi cannot use. Once ended, a Navi cannot be Frozen for 2 turns.
+		</div>
+		
+		<span id="ice-1" hidden><font color=#00FFFF><img src="http://imgur.com/gkTNQcL.png" alt="Ice"> Ice Lv1</font>: +10 Armor.</span>
+		
+		<span id="ice-2" hidden><font color=#00FFFF><img src="http://imgur.com/gkTNQcL.png" alt="Ice"> Ice Lv2</font>: +20 Armor. Enemies have -1 Attack Slot on their first turn.</span>
+		
+		<span id="ice-3" hidden><font color=#00FFFF><img src="http://imgur.com/gkTNQcL.png" alt="Ice"> Ice Lv3</font>: +30 Armor. Enemies have -1 Attack Slot on their first two turns.</span> 
+		
+		<span id="ice-4" hidden><font color=#00FFFF><img src="http://imgur.com/gkTNQcL.png" alt="Ice"> Ice Lv4</font>: +40 Armor. Enemies have -2 Attack Slots on their first two turns.</span> 
+		
+		<span id="ice-5" hidden><font color=#00FFFF><img src="http://imgur.com/gkTNQcL.png" alt="Ice"> Ice Lv5</font>: +50 Armor. Enemies have -2 Attack Slots on their first two turns.
+		<br>Immune to Freeze.</span>
+    </div>
+
+    <div id="plasmaeffects">
+    	<span id="plasma-1" hidden><font color=#6666FF><img src="http://imgur.com/hlVKolp.png" alt="Plasma"> Plasma Lv1</font>: 5 Turn Charge Attacks deal +25% Total Damage.</span>
+		
+		<span id="plasma-2" hidden><font color=#6666FF><img src="http://imgur.com/hlVKolp.png" alt="Plasma"> Plasma Lv2</font>: 4+ Turn Charge Attacks deal +25% Total Damage.</span>
+		
+		<span id="plasma-3" hidden><font color=#6666FF><img src="http://imgur.com/hlVKolp.png" alt="Plasma"> Plasma Lv3</font>: 3+ Turn Charge Attacks deal +25% Total Damage.</span>
+		
+		<span id="plasma-4" hidden><font color=#6666FF><img src="http://imgur.com/hlVKolp.png" alt="Plasma"> Plasma Lv4</font>: 2+ Turn Charge Attacks deal +25% Total Damage.</span>
+		
+		<span id="plasma-5" hidden><font color=#6666FF><img src="http://imgur.com/hlVKolp.png" alt="Plasma"> Plasma Lv5</font>: All Charged Attacks deal +25% Total Damage.</span>
+    </div>
+
+    <div id="seekingeffects">
+    	<div id="seeking-specialproperty-0" hidden>	
+    		<font color=#338833>Special Property</font>: Precision
+			<font color=#338833>When Activated</font>: Adds 'Fully Undodgeable' to One Attack for one use.
+			<br><br>
+			<font color=#338833>Cooldown</font>: This Effect has a 5 Turn Cooldown between activations.
+		</div>
+		
+		<span id="seeking-1" hidden><font color=#338833><img src="http://imgur.com/4ZAxjNi.png" alt="Seeking"> Seeking Lv1</font>: +50 Damage to One Attack (Once per Turn).</span>
+		
+		<span id="seeking-2" hidden><font color=#338833><img src="http://imgur.com/4ZAxjNi.png" alt="Seeking"> Seeking Lv2</font>: +100 Damage to One Attack (Once per Turn).</span>
+		
+		<span id="seeking-3" hidden><font color=#338833><img src="http://imgur.com/4ZAxjNi.png" alt="Seeking"> Seeking Lv3</font>: +150 Damage to One Attack (Once per Turn).
+		<br>+1 Use to Aiming Skills.</span>
+		
+		<span id="seeking-4" hidden><font color=#338833><img src="http://imgur.com/4ZAxjNi.png" alt="Seeking"> Seeking Lv4</font>: +200 Damage to One Attack (Once per Turn).
+		<br>+1 Use to Aiming Skills.</span>
+		
+		<span id="seeking-5" hidden><font color=#338833><img src="http://imgur.com/4ZAxjNi.png" alt="Seeking"> Seeking Lv5</font>: +250 Damage to One Attack (Once per Turn).
+		<br>+2 Uses to Aiming Skills.</span>
+    </div>
+
+    <div id="toxiceffects">
+    	<div id="toxic-specialproperty-1" hidden>
+    		<font color=#99CC99>Special Property</font>: Poison
+			<font color=#99CC99>Status Effect</font>: Costs 20 Damage to add to a Toxic Attack. <font color=#99CC99>Requires Toxic Lv2 or Higher</font>.
+			<br>
+			<font color=#99CC99>Minimum Cooldown</font>: 1 Turn
+			<br><br>
+			<font color=#99CC99>Poison</font>: For 2 turns, the afflicted Navi takes 10 Damage/turn and has -10 Damage (final total). If they're hit by Poison again, they take 10 more Damage/turn, have -10 more Damage, and if it's the first time they've taken Poison in the turn the Damage/Damage reduction last +1 turn, to a max of 50 Damage/turn, -50 Damage, and 6 turns. If the Damage/Damage reduction are capped, the duration cannot be increased. If the Damage/Damage reduction is at 30 or more, they can't use Undershirt effects. Once ended, a Navi cannot be Poisoned for 2 turns.
+		</div>
+		
+		<span id="toxic-1" hidden><font color=#99CC99><img src="http://imgur.com/K6EUsQk.png" alt="Toxic"> Toxic Lv1</font>: Enemies take 40 Unavoidable damage per turn.</span>
+		
+		<span id="toxic-2" hidden><font color=#99CC99><img src="http://imgur.com/K6EUsQk.png" alt="Toxic"> Toxic Lv2</font>: Enemies take 70 Unavoidable damage per turn.</span>
+		
+		<span id="toxic-3" hidden><font color=#99CC99><img src="http://imgur.com/K6EUsQk.png" alt="Toxic"> Toxic Lv3</font>: Enemies take 100 Unavoidable damage per turn.</span>
+		
+		<span id="toxic-4" hidden><font color=#99CC99><img src="http://imgur.com/K6EUsQk.png" alt="Toxic"> Toxic Lv4</font>: Enemies take 130 Unavoidable damage per turn.</span>
+		
+		<span id="toxic-5" hidden><font color=#99CC99><img src="http://imgur.com/K6EUsQk.png" alt="Toxic"> Toxic Lv5</font>: Enemies take 160 Unavoidable damage per turn.
+		<br>Immune to Poison.</span>
+    </div>
+<!-- HP/Armor/Regeneratiom/Natural Avoids/Base Damage/Attack Slots --> 
+	<br>
+	<br>
+	<div class="info">
+		HP:
+		<output name="hp" for="basehp hpsacrafice">1000</output>
+		<sub class="spoiler" data-info="#hpinfo">
+			(+)
+		</sub>
+			<div id="hpinfo" class="infoslider" hidden>
+				<span class="graytext">
+				<span class="greentext">You begin with 1000 Max HP.</span>
+				<br>
+				At every Version-Up, you gain +100 Max HP.
+				<br>
+				When you take enough damage to reduce this to 0, you lose the battle.
+				<br>
+				You may choose to sacrifice -100 from your Max HP to gain +10 Base Damage in exchange, to a max of -500 HP and +50 Damage.
+				<input type="number" id="hpsacrafice"  min="0" max="500" step="100" value="0">
+				+<output name="dmgbonus" for="hpsacrafice bonus">0</output>dmg
+				<input type="hidden" id="basehp" value="1000">
+				<input type="hidden" id="bonus" value="10">
+				</span>
+			</div>
+	</div>
+	<br>
+	<div class="info">
+		Armor:
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0
+		<sub class="spoiler" data-info="#armorinfo">
+			(+)
+		</sub>
+		<div id="armorinfo" class="infoslider" hidden>
+			<span class="graytext">
+			<span class="greentext">You begin with 0 Armor.</span>
+			<br>
+			Armor reduces the damage taken by all attacks by its shown amount on a per-hit basis.
+			<br>
+			Negative Armor increases the damage taken on a per-hit basis.
+			<br>
+			Armor is inapplicable to any unavoidable source of damage, or any source of damage other than an Attack.
+			</span>
+		</div>
+	</div>
+	<br>
+	<div class="info">
+		Regeneration: 0
+			<sub class="spoiler" data-info="#regenerationinfo">
+				(+)
+			</sub>
+		<div id="regenerationinfo" class="infoslider" hidden>
+			<span class="graytext">
+				<span class="greentext">You begin with 0 Regen.</span>
+				<br>
+				At the beginning of every turn, your restore HP equal to the shown value of your Regen.
+				<br>
+				You cannot heal beyond x1.25 your Max HP. This is called your "Peak HP".
+			</span
+		</div>
+	</div>			
+<br>
+<br>
+	<div class="info">
+		Natural Avoid:
+		<sub class="spoiler" data-info="#naturalavoidinfo">
+			(+)
+		</sub>
+		<br>
+		<div id="naturalavoidinfo" class="infoslider" hidden>
+			<span class="graytext">
+			<span class="greentext">You begin with one of these (A Dodge, Shield, or 1-Hit Barrier) on a 5 Turn CD.</span>
+			<br>
+			The Natural Avoid allows you to avoid 1 attack before going on cooldown.
+			<br>
+			<br>Natural Dodges cannot dodge attacks marked "Undodgeable".
+			<br>Natural Shields cannot block attacks marked "Breaks Shields".
+			<br>Natural Barriers do not have HP and cannot absorb attacks marked "Cuts Auras".
+			<br>
+			<br>
+			You choose which kind of Natural Avoidance your Navi is capable of when you create them, not in the middle of battle.
+		</span></div>
+			Select:
+			<input type="radio" name="naturalavoid" value="dodge">Dodge
+			<input type="radio" name="naturalavoid" value="shield">Shield
+			<input type="radio" name="naturalavoid" value="barrier">Barrier
+			<span id="naturalavoidcooldown">5 Turn CD</span>
+	</div>
+<br>
+	<div class="info">
+		Base Damage:
+			<output name="damage" for="basedamage dmgbonus">100</output>
+			<input type="hidden" id="basedamage" value="100">
+
+			<sub class="spoiler" data-info="#basedamageinfo">
+				(+)
+			</sub>
+			<div id="basedamageinfo" class="infoslider" hidden>
+				<span class="graytext">
+				<span class="greentext">You begin with 100 Base Damage.</span>
+				<br>
+				At every Version-Up, you gain +10 Base Damage.
+				<br>
+				All of your attacks deal default damage equal to the value shown.
+				<br>
+			</span></div>
+	</div>
+	<div class="info">
+		Attack Slots:
+		&nbsp;2 
+		<sub class="spoiler" data-info="#attackslotinfo">
+			(+)
+		</sub>
+		<div id="attackslotinfo" class="infoslider" hidden>
+			<span class="graytext">
+			<span class="greentext">You begin with 2 Attack Slots.</span>
+			<br>
+			You gain +1 Attack Slot at Version 2 and from various other sources.
+			<br>
+			Attack Slots enable your navi to attack once per turn, per attack slot you have.
+			<br>
+			No attack can be used without consuming at least 1 Attack Slot unless otherwise specified.
+		</span></div>
+	</div>
+	</td>
+</tr>
+<!-- Skills -->
+<tr>
+	<td colspan="2">
+		<div class="info">
+			<b>Skills:</b>
+			<sub class="spoiler" data-info="#skillinfo">
+				(+)
+			</sub>
+			<div id="skillinfo" class="infoslider" hidden>
+				<span class="graytext">
+				<span class="greentext">You begin with 4 Skills of any type</span>
+				<br>
+				You learn additional Skills as your Navi continues to Version Up.
+				<br>
+				<br>
+				Skills are the tools with which you persevere and dominate in the Melee. Each skillset is, then, a toolbox crafted by the player and is in their complete control. You may never have 2 or more of the same skill. If you have a skill that dodges 2 attacks, then no matter what the additions to it you may never have another skill that dodges two attacks.
+				<br>
+				<br>
+				<span class="whitetext"><b><u>Skill Classification</b></u></span>
+				<br>
+				<br>
+				- <span class="redtext">Activated Skills</span>: Some skills are activated and have a limited number of times they can be used based on your Version and the power of the skill - these numbers may be augmented in or out of battle by other effects. Some skills even have hard caps, where regardless of effects they can only be used a certain number of times per battle.
+				<br>
+				<br>
+				- <span class="redtext">Passive Skills</span>: Passive skills are weaker than activated skills, but they are always in effect and must be denoted as such.
+				<br>
+				<br>
+				- <span class="redtext">Custom Skills</span>: Since skills are in your control, they may be capable of things that were not preset in our own guidelines. Some Skills may burn a unique resource, they may cost 2 Skills to create, or they may interact in such a way that classifies them as something totally different. The power is in your hands.
+				<br>
+				<br>
+				<span class="whitetext"><b><u>Skill Types</u></b></span>
+				<br>
+				<br>
+				- <span class="redtext">Defense Skills</span> primarily focus on mitigating damage, removing harmful statuses, and building your navi's durability.
+				<br>
+				<br>
+				- <span class="redtext">Speed Skills</span> are designed to dodge incoming attacks, speed up your navi, modify the terrain, or build your navi's mobility.
+				<br>
+				<br>
+				- <span class="redtext">Support Skills</span> provide protection with protective barriers and auras while also enhancing yours and you allies' survivability.
+				<br>
+				<br>
+				- <span class="redtext">Offense Skills</span> add destructive power to your attacks through means of raw power, increased accuracy, or through some other method that essentially boosts your navi's damage output.
+			</span></div>
+		</div>
+	</th>
+</tr>
+<tr>
+	<td>
+		<table id="skilltable" width="50%">
+			<tr class="skillmasterrow" hidden>
+        	<td colspan="2"><span class="graytext">
+		Skill Name:
+			&nbsp;&nbsp;
+			<input type="text" name="skillname" placeholder="Skill Name">
+		<br>
+		Skill Type:
+			&nbsp;&nbsp;&nbsp;&nbsp;
+			<select>
+			<option value="--">--</option>
+			<option value="defenseskill">Defense</option>
+			<option value="speedskill">Speed</option>
+			<option value="supportskill">Support</option>
+			<option value="offensiveskill">Offensive</option>
+			<option value="customskill">Custom</option>
+			</select>
+		<br>
+			Skill Description:
+			&nbsp;
+			<textarea rows="2" cols="20" input type="text" name="skilldescription" placeholder="Skill Description."></textarea>
+		
+			Skill Effect:
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;			<textarea rows="5" cols="20" input type="text" name="skilldescription" placeholder="Skill Effect.(Effects like +or-Armor/HP/Regen/AS/Dmg/CD will have to be edited in later by you because skils are much more open when it comes to effects)."></textarea>
+		<br>
+			Skill Uses: x<input type="number" id="skilluse" min="0" max="10" value="0">
+		<br>
+			<input type="radio" name="skillclass" value="passivw">Passive
+			<input type="radio" name="skillclass" value="shield">Active
+				</span</td>
+			</tr>
+			<tr class="skilladdremove">
+				<th colspan="2">
+					<button type="button" onclick="addskill()">Add Skill</button>
+				</th>
+			</tr>
+		</table>
+	</td>
+</tr>
+<!-- Attacks -->
+
+<tr>
+	<td colspan="2">
+		<div class="info">
+			<b>Attacks:</b>
+			<sub class="spoiler" data-info="#attackinfo">
+				(+)
+			</sub>
+			<div id="attackinfo" class="infoslider" hidden>
+				<span class="graytext">
+				<span class="greentext">You begin with 5 Attacks. Their combined Cooldown cannot exceed your maximum CD.</span>
+				<br>
+				You learn two new attacks at every Version-Up.
+				<br>Additionally, you gain +1 Max CD at every Version-Up.
+				<br>
+				<br>Your Attacks are often the core feature of your navi. They are a primary and dependable source of damage and allow for a level of customization second only to your Skills.
+				<br>
+				<br>There are two possible <span class="redtext">Ranges</span> for attacks: These are "C" (Combat), and "S" (Shot). Each attack must have a range chosen on creation. The range is both a role-play descriptor that tells you generally how close or far you are when you unleash the attack, and it's an interactive attribute for you to work with in your stats. 
+				<br>
+				<br>The <span class="redtext">Element</span> of an attack determines several interactions that the attack has throughout the MMM battle system, such as the Strengths and Weaknesses of other Navis. When you create an attack, you must choose (from your navi's elements) which element your attack is.
+				<br>
+				<br>By default, all of your attacks will deal damage equal to your navi's <span>Base Damage</span>. Adding Effects, Cooldown, and Drawbacks to an attack will raise or lower its damage accordingly. You cannot add effects or stack statuses on a navi such that the attack's damage (as calculated) is below 0
+				<br>
+				<br><span class="whitetext">Basic Effects</span>
+				<br>
+				<br><span class="redtext">Aimers</span> are effects that boost the accuracy of your attack. The more you have, the more likely your attack will hit its target.
+				<br>
+				<br>- Aimers cost 20 Damage to add to an attack, and you can never have more than 2 on the same attack.
+				<br>
+				<br>- There are three kinds of aimers: Undodgeable, Breaks Shields, and Cuts Auras.
+				<br>
+				<br>- Undodgeable means that the attack cannot be dodged or avoided with a "Dodge-Type" Speed Skill.
+				<br>
+				<br>- Breaks Shields means that the attack cannot be blocked or avoided with a "Shield-Type" Defense Skill.
+				<br>
+				<br>- Cuts Auras means that the attack cannot be stopped by a "Barrier" or "Aura"-Type Support Skill. This attack does damage to both the target and its Barrier/Aura, and will destroy it (the Barrier/Aura) if applicable. 
+				<br>
+				<br><span class="redtext">Augments</span> determine who, how, and when an attack hits or affects your opponents. 
+				<br>
+				<br>- The following effects fall under this category:
+				<br>-- Cannot be Countered
+				<br>-- Cannot be Intercepted
+				<br>-- Ignores Armor
+				<br>-- Hits All
+				<br>
+				<br>- Augments cost 20 Damage to add to an attack and require at least 1 Turn of CD.
+				<br>
+				<br>- You can have any number of Augments on the same attack, but you can only have 1 of each kind throughout your entire attack set per 8 Max CD your Navi has.
+				<br>
+				<br><span class="whitetext">Advanced Effects</span> have strong restrictions for use. 
+				<br>
+				<br>- The following effects fall under this category:
+				<br>-- Destroys (Choose One: Objects | Clones | Barriers | Auras)
+				<br>-- If Avoided: (followed by a triggerable effect)
+				<br>-- Regardless of Success: (followed by a triggerable effect)
+				<br>-- Avoid Separately (Applied to Multi Hit Attacks. Max: 4 Hits.)
+				<br>
+				<br>- These effects cost 50 Damage to add to an attack and require at least 2 Turns of CD.
+				<br>
+				<br>- The Cooldown of 'Destroys' attacks cannot be reduced below 1 Turn; this is their <u>Mandatory Cooldown</u>.
+				<br>
+				<br>- You can have any number of these effects on the same attack, but you can only have 1 of each kind throughout your entire attack set per 12 Max CD your Navi has.
+				<br>
+				<br><span class="redtext">Restricted Effects</span> cannot be used at all unless specifically granted by an outside source. 
+				<br>
+				<br>- The following effects fall under this category:
+				<br>-- Unavoidable
+				<br>-- Cuts Undershirt
+				<br>-- Cuts Darksoul
+				<br>
+				<br>- These effects have their own unique costs and limitations that are explained when you receive them.
+				<br>
+				<br>- These effects all have a Mandatory 1 Turn CD.
+			</span>
+		</div>
+		</div>
+	</td>
+</tr>
+<tr>
+	<td colspan="2">
+		<div class="info">
+		Max Cooldown:<span id="maxcd">10</span>
+		<sub class="spoiler" data-info="#cdchargeinfo">
+				(+)
+			</sub>
+		<div id="cdchargeinfo" class="infoslider" hidden>
+			<span class="graytext">
+			<span class="whitetext">Cooldown and Charge</span>
+			<br><br>
+			<span class="greentext">Cooldown</span> is attached to an attack or ability to represent the number of turns you must wait before you using that ability again.
+			<br><br>
+			<span class="greentext">Minimum Cooldown</span> represents the lowest possible Cooldown that certain effects are allowed to have (this is also called Required Cooldown or Mandatory Cooldown).
+			<br><br>
+			Cooldown is applied to attacks with powerful effects (to prevent spamming and abuse). As an added bonus, the attack in question will deal additional damage depending on how long its Cooldown is. If the Cooldown is higher than the Minimum Cooldown of that attack, it will deal even more damage.
+			<br><br>
+			<span class="greentext">1 CD</span>: +10 Damage (+20 Damage if above minimum)
+			<br><span class="greentext">2 CD</span>: +30 Damage (+50 Damage if above minimum)
+			<br><span class="greentext">3 CD</span>: +50 Damage (+70 Damage if above minimum)
+			<br><span class="greentext">4 CD</span>: +70 Damage (+100 Damage if above minimum)
+			<br><span class="greentext">5 CD</span>: +100 Damage (+150 Damage if above minimum)
+			<br><br>
+			<span class="greentext">Charge</span> is an alternative to Cooldown. For each turn of Charge on an attack, you must spend an attack slot for that many turns before you can use it.
+			<br><br>
+			<span class="greentext">Optional Charge</span> is not an alternative to Cooldown. It enables you to choose whether or not you charge an attack before unleashing it. Optional Charges can be released anywhere between 1-5 Turns and have reduced Damage Multipliers, but otherwise follow the same rules as regular Charged Attacks.
+			<br><br>
+			Attacks with Optional Charge lose 10 Damage per turn they are capable of being charged.
+			<br><br>
+			Each Attack can only be charged once per turn. You may not have multiple instances of the same charge at once. Charges are not held indefinitely: you must state which attack you're charging every turn (and spend the Attack Slot to do so), otherwise the Charge is dropped. Likewise, you must release the Attack at the end of its Charge, otherwise the Charge is dropped.
+			<br><br>
+			Charged Attacks are released 1 Turn after their last charge. In exchange for their strict guidelines, Charged Attacks provide immense power depending on how long they've been held.
+			<br><br>
+			<span class="greentext">1 Charge</span>: x1.75 Damage (x1.5 if Optional)
+			<br><span class="greentext">2 Charge</span>: x3.00 Damage (x2.5 if Optional)
+			<br><span class="greentext">3 Charge</span>: x4.25 Damage (x4.0 if Optional)
+			<br><span class="greentext">4 Charge</span>: x5.50 Damage (x5.0 if Optional)
+			<br><span class="greentext">5 Charge</span>: x6.25 Damage (x6.0 if Optional)
+		</div>
+	</div>
+	</td>
+</tr>	
+<tr>
+	<td>
+		<table id="attacktable" width="50%">
+			<tr class="attackmasterrow" hidden>
+        		<td colspan="2"><span class="graytext">
+			Attack Name:
+			&nbsp;&nbsp;
+						<input type="text" name="attackname" placeholder="Attack Name">
+
+			Attack Range:
+						<input type="radio" name="range" value="range-c">C
+						<input type="radio" name="range" value="range-s">S
+			,Attack Element:
+			<br>
+			Attack Description:
+			&nbsp;
+			<textarea rows="2" cols="20" input type="text" name="attackdescription" placeholder="(Attack Description)."></textarea>
+
+
+			Attack Damage:
+						<output name="attackdmg" for="damage"><span class="whitetext">100</span></output>
+			<br>
+			Attack Effects:
+			<br>
+			<span class="redtext">Aimers</span> -20dmg 0 CD
+				<br>
+          			<input type="checkbox" value="0">Undodgeable
+          			<br>
+          			<input type="checkbox" value="0"> Breaks Shield
+          			<br>
+          			<input type="checkbox" value="0"> Cuts Aura
+					<br>
+					<span class="redtext">Augments:</span> -20dmg 1 CD (1 of each per 8 max cooldown)
+					<br>
+          			<input type="checkbox" value="0">Cannot be countered
+          			<br>
+          			<input type="checkbox" value="0">Cannot be intercepted
+          			<br>
+          			<input type="checkbox" value="0"> Ignores Armor
+          			<br>
+          			<input type="checkbox" value="0"> Hits all
+          			<br>
+   					<span class="redtext">Advanced effects:</span> -50dmg 2 CD (1 of each per 12 max cooldown)
+   					<br>
+          			<input type="checkbox" value="destroys">Destroys...
+          			<br>
+          			<input type="radio" name="destroyeffect" value="1">Objects
+          			<input type="radio" name="destroyeffect" value="2">Clones
+          			<input type="radio" name="destroyeffect" value="3"> Barrier/Aura
+          			<br>
+          			<input type="checkbox" value="0">
+          			If avoided...
+          			<br>
+          			<textarea rows="2" cols="40" input type="text" name="appearance" placeholder="place effect here"></textarea>
+          			<br>
+          			<input type="checkbox" value="0">
+          			Regardless of success...
+          			<textarea rows="2" cols="40" input type="text" name="appearance" placeholder="place effect here"></textarea>
+          			<br>
+          			<input type="checkbox" value="0">Avoid Separately (only for attacks with multiple hits, max 4 hits)
+					<br>
+					<br>
+					Attack Cooldown:
+					<input type="number" id="attackcd"  min="0" max="5" value="0">Turn CD 
+					<br>
+					Attack Charge:
+					&nbsp;&nbsp;&nbsp;
+					<input type="number" id="attackchrg"  min="0" max="5" value="0">Turn Chrg
+					<br>
+					<input type="radio" name="charge" value="1">Mandatory
+          			<input type="radio" name="charge" value="2">Optional (-10 Dmg per turn)
+						</span>
+					</td>
+				</tr>
+				<tr class="attackaddremove">
+					<th colspan="2">
+					<button type="button" onclick="addattack()">Add Attack</button>
+					</th>
+				</tr>
+			</table>
+		</td>
+	</tr>
+	<tr>
+		<th>
+			<button type="button">Submit</button>
+		</th>
+	</tr>
+	<tr>
+		<td id="submit" hidden>
+<div id="submittemplate"> 
+	<div>	
+		[div align="center"][u]|[b]Navi & RP Information[/b]|[/u][/div]
+	</div>
+	<br>
+	<div>
+		-[b]Navi Name[/b]:<span id="nametarget">test</span> <!--Navi Name target-->
+	</div>
+	<br>
+	<div>
+		--[i]Appearance[/i]:<span id="appearancetarget">test</span><!--Appearance target-->
+	</div>
+	<br>
+	<div>
+		--[i]Personality[/i]:<span id="personalitytarget">test</span> <!--Personality target-->
+	</div>
+	<br>
+	<div>
+		--[i]Background[/i]:<span id="backgroundtarget">test</span> <!--Backgroundtarget-->
+	</div>
+	<br><br>
+	<div>
+		-[b]Version / Experience[/b]:
+		<br>--[i]Version[/i]: 1
+		<br>--[i]Experience[/i]: 500
+	</div>
+	<br>
+	<div>
+		-[b]Funds[/b]:
+		<br>--[i]Zenny[/i]: <span id="zennytarget">1000</span><!--Beginning target-->
+		<br>--[i]Bugfrags[/i]: 0
+	</div>
+	<br><br>
+	<div>
+		[div align="center"][u]|[b]Statistical Information[/b]|[/u][/div]
+	</div>
+	<br>
+	<div>
+		-[b]Type[/b]:<span id="typetarget"></span><!--Type target bellow type effects-->
+		<span id="typeeffecttarget"></span>
+	</div>
+	<br>
+	<div>
+		-[b]Karma[/b]:<span id="karmatarget"></span> <!--Karma target bellow karma effects-->
+		<span id="karmaeffects"></span>
+	</div>
+	<br>
+	<div>
+		-[b]Elements[/b]:<span id="elementtarget"></span> <!--Element target bellow elment effects-->
+		<span id="elementeffectstarget"></span>
+	</div>
+	<br>
+	<div>
+		--[i]Net Strengths[/i]:<span id="netstrengthtarget"></span> <!--Elemental Strength target-->
+		<br>--[i]Net Weaknesses[/i]:<span id="netweaknesstarget"></span> <!--Elemental Weakness target-->
+	</div>
+	<br><br>
+	<div>
+		-[b]HP[/b]:<span id="hptarget">1000</span><!--HP target-->
+	</div>
+	<br>
+	<div>
+		-[b]Armor[/b]:<span id="armortarget">0</span><!--Armor target-->
+	</div>
+	<br>
+	<div>
+		-[b]Regeneration[/b]:<span id="regenerationtarget">0</span><!-- Regeneration target-->
+	</div>
+	<br>
+	<div>
+		-[b]Natural Avoid[/b]:<span id="naturalavoidtarget"></span><!-- Natural Avoid target add extra NA's Bellow-->
+	</div>
+	<br>
+	<div>
+		-[b]Base Damage[/b]:<span id="basedamagetarget">100</span><!--Base Damage target-->
+	</div>
+	<br>
+	<div>
+		-[b]Attack Slots[/b]:<span id="attackslottarget">2</span><!--Attack Slot target-->
+	</div>
+	<br><br>
+	<div>
+		[div align="center"][u]|[b]Skills[/b]|[/u][/div]
+	</div>
+	<br>
+	<div id="skillmasterrowtarget">
+		<!--Skill Master Row target-->
+		Skill Name:<span id="skillnametarget"></span><!--Skill name target-->
+		<br>Skill Type:<span id="skilltypetarget"></span><!--SKill type target-->
+		<br>Skill Description:<span id="skilldescriptiontarget"></span><!--Skill Description target-->
+		<br>Skill Effect:<span id="skilleffecttarget"></span><!--Skill Effect target-->
+		<br>Skill Uses:<span id="skillusestarget"></span><!--SKill Uses target-->
+		<span id="skillaptarget"></span><!--Active/Passive target-->
+	</div>
+	<br><br>
+	<div>
+		[div align="center"][u]|[b]Attacks[/b]|[/u][/div]
+	</div>
+	<br>
+	<div>
+		-[b]Max Cooldown[/b]: 0/10<!--target-->
+	</div>
+	<br>
+	<div id="attackmasterrowtarget">
+		<!--Attack Master Row target-->
+		Attack Name:<span id="attacknametarget"></span><!--Attack Name target-->
+		<br>Attack Range:<span id="attackrangetarget"></span><!--Attack Range target-->, Attack Element:<span id="attackelementtarget"></span><!--Attack Element target-->
+		<br>Attack Description:<span id="attackdescriptiontarget"></span><!--Attack Description target-->
+		<br>Attack Damage:<span id="attackdamagetarget"></span><!-- Attack Damage target-->
+		<br>Attack Effects:<span id="attackeffecttarget"></span><!--Attack Effects target-->
+		<br>Attack Cooldown:<span id="attackcooldowntarget"></span><!-- Attack Cool Down target-->
+		<span id="attackchargetarget"></span><!--Attack Charge target-->
+	</div>
+</div>
+</td>
+</tr>
+</table>
+</form>
+</body>
