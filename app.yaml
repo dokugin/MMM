@@ -9,8 +9,8 @@ handlers:
   static_files: favicon.ico
   upload: favicon\.icon
 
-- url: NaviCust.html*
-  script: 
+- url: /.*
+  script: helloworld.php
 
 libraries:
 - name: webapp2
